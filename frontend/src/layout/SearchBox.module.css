@@ -9,22 +9,38 @@
   display: flex;
   align-items: stretch;
   background: #fff;
-  border-radius: var(--radius-pill);
+  border-radius: 8px;
   overflow: hidden;
-  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 6%);
-  transition: box-shadow 0.2s ease;
+  border: 1px solid #c4c4cf;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form:hover:not(:focus-within) {
+  border-color: #808089;
 }
 
 .form:focus-within {
-  box-shadow:
-    inset 0 0 0 1px rgb(26 148 255 / 35%),
-    0 0 0 3px rgb(26 148 255 / 18%);
+  border-color: var(--tiki-blue);
+  box-shadow: 0 0 0 3px rgba(26, 148, 255, 0.15);
+}
+
+.inputWrapper {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  padding-left: 12px;
+  gap: 8px;
+}
+
+.searchIcon {
+  color: #808089;
+  flex-shrink: 0;
 }
 
 .input {
   flex: 1;
   min-width: 0;
-  padding: 10px 8px 10px 16px;
+  padding: 10px 4px;
   border: none;
   outline: none;
   font: inherit;
@@ -34,7 +50,14 @@
 }
 
 .input::placeholder {
-  color: #a2a2ad;
+  color: #808089;
+}
+
+.divider {
+  width: 1px;
+  background: #ebebf0;
+  margin: 8px 0;
+  flex-shrink: 0;
 }
 
 .button {
@@ -43,24 +66,27 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 0 18px;
-  min-width: 92px;
-  background: var(--tiki-blue);
+  padding: 0 20px;
+  background: transparent;
   border: none;
-  color: #fff;
+  color: #0b74de;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: color 0.15s ease, transform 0.1s ease;
 }
 
 .button:hover {
-  background: var(--tiki-blue-hover);
+  color: var(--tiki-blue-dark);
+}
+
+.button:active {
+  transform: scale(0.97);
 }
 
 .buttonText {
   font: inherit;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .buttonIcon {

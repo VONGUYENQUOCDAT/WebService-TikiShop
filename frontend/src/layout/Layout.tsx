@@ -2,6 +2,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Outlet, useLocation } from "react-router-dom";
 import Footer from "./Footer";
 import Header from "./Header";
+import EventModal from "./EventModal";
 
 export default function Layout() {
   const location = useLocation();
@@ -24,6 +25,7 @@ export default function Layout() {
         </AnimatePresence>
       </main>
       <Footer />
+      <EventModal />
     </>
   );
 }

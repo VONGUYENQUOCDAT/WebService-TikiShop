@@ -26,6 +26,13 @@ export default function ProductPage() {
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [relatedLoading, setRelatedLoading] = useState(false);
 
+  // Product reviews states
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviewsTotal, setReviewsTotal] = useState(0);
+  const [reviewsDistribution, setReviewsDistribution] = useState<Record<number, number>>({ 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 });
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewsPage, setReviewsPage] = useState(1);
+
   useEffect(() => {
     if (!slug) return;
     setLoading(true);
@@ -49,6 +56,23 @@ export default function ProductPage() {
       .catch(() => setProduct(null))
       .finally(() => setLoading(false));
   }, [slug]);
+
+  useEffect(() => {
+    if (!product) return;
+    setReviewsLoading(true);
+    api
+      .getProductReviews(product.id, { page: reviewsPage, pageSize: 5 })
+      .then((res) => {
+        setReviews(res.reviews);
+        setReviewsTotal(res.total);
+        setReviewsDistribution(res.distribution || { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 });
+      })
+      .catch(() => {
+        setReviews([]);
+        setReviewsTotal(0);
+      })
+      .finally(() => setReviewsLoading(false));
+  }, [product, reviewsPage]);
 
   const addToCart = async () => {
     if (!product) return;
@@ -238,6 +262,130 @@ export default function ProductPage() {
             <div className={styles.descBody}>
               <p>{product.description}</p>
             </div>
+          </section>
+        </FadeIn>
+
+        {/* Customer reviews section */}
+        <FadeIn delay={0.12}>
+          <section className={styles.reviewsSection} aria-labelledby="reviews-heading">
+            <h2 id="reviews-heading" className={styles.sectionTitle}>Khách hàng đánh giá</h2>
+            
+            <div className={styles.reviewsOverview}>
+              <div className={styles.ratingSummary}>
+                <div className={styles.averageRating}>{product.rating}</div>
+                <div className={styles.stars} aria-hidden>
+                  {"★".repeat(Math.round(product.rating))}
+                  {"☆".repeat(5 - Math.round(product.rating))}
+                </div>
+                <div className={styles.totalReviewsCount}>{product.reviewCount} đánh giá</div>
+              </div>
+
+              <div className={styles.ratingDistribution}>
+                {[5, 4, 3, 2, 1].map((stars) => {
+                  const count = reviewsDistribution[stars] || 0;
+                  const percent = reviewsTotal > 0 ? Math.round((count / reviewsTotal) * 100) : 0;
+                  return (
+                    <div key={stars} className={styles.distributionRow}>
+                      <span className={styles.distStars}>{stars} ★</span>
+                      <div className={styles.distBarWrap}>
+                        <div className={styles.distBarFill} style={{ width: `${percent}%` }} />
+                      </div>
+                      <span className={styles.distPercent}>{percent}%</span>
+                      <span className={styles.distCount}>({count})</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {reviewsLoading && (
+              <div className={styles.reviewsLoading}>Đang tải đánh giá...</div>
+            )}
+
+            {!reviewsLoading && reviews.length === 0 && (
+              <div className={styles.emptyReviews}>
+                <p>Chưa có đánh giá nào cho sản phẩm này.</p>
+                <p className={styles.emptySubtitle}>Hãy mua hàng và trở thành người đầu tiên viết nhận xét nhé!</p>
+              </div>
+            )}
+
+            {!reviewsLoading && reviews.length > 0 && (
+              <div className={styles.reviewsList}>
+                {reviews.map((rev) => {
+                  let parsedImages: string[] = [];
+                  try {
+                    parsedImages = typeof rev.imageUrls === "string" ? JSON.parse(rev.imageUrls) : (rev.imageUrls ?? []);
+                  } catch {
+                    parsedImages = [];
+                  }
+                  return (
+                    <div key={rev.id} className={styles.reviewItem}>
+                      <div className={styles.reviewUserHead}>
+                        <span className={styles.reviewAvatar}>
+                          {rev.user?.name ? rev.user.name.charAt(0).toUpperCase() : "U"}
+                        </span>
+                        <div>
+                          <div className={styles.reviewUserName}>{rev.user?.name || "Khách hàng Tiki"}</div>
+                          <div className={styles.reviewMeta}>
+                            <span className={styles.reviewStars}>
+                              {"★".repeat(rev.rating)}
+                              {"☆".repeat(5 - rev.rating)}
+                            </span>
+                            <span className={styles.reviewDate}>
+                              {new Date(rev.createdAt).toLocaleDateString("vi-VN")}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {rev.comment && <p className={styles.reviewComment}>{rev.comment}</p>}
+
+                      {parsedImages.length > 0 && (
+                        <div className={styles.reviewImages}>
+                          {parsedImages.map((imgUrl, i) => (
+                            <img key={i} src={imgUrl} alt={`Ảnh đánh giá ${i + 1}`} className={styles.reviewImg} />
+                          ))}
+                        </div>
+                      )}
+
+                      {rev.adminReply && (
+                        <div className={styles.adminReplyBlock}>
+                          <div className={styles.adminReplyTitle}>
+                            💬 <strong>Tiki Phản hồi:</strong>
+                          </div>
+                          <p className={styles.adminReplyText}>{rev.adminReply}</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {/* Pagination */}
+                {reviewsTotal > 5 && (
+                  <div className={styles.reviewsPagination}>
+                    <button
+                      type="button"
+                      disabled={reviewsPage <= 1}
+                      onClick={() => setReviewsPage((p) => Math.max(1, p - 1))}
+                      className="btn btn-outline btn-sm"
+                    >
+                      ← Trước
+                    </button>
+                    <span className={styles.paginationText}>
+                      Trang {reviewsPage} / {Math.ceil(reviewsTotal / 5)}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={reviewsPage >= Math.ceil(reviewsTotal / 5)}
+                      onClick={() => setReviewsPage((p) => Math.min(Math.ceil(reviewsTotal / 5), p + 1))}
+                      className="btn btn-outline btn-sm"
+                    >
+                      Sau →
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </section>
         </FadeIn>
 

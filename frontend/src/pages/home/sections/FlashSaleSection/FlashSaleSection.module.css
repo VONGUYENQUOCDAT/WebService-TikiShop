@@ -1,0 +1,350 @@
+/* FlashSaleSection.module.css */
+
+.wrapper {
+  margin: var(--section-y) 0;
+  padding: 24px 0;
+  background: linear-gradient(135deg, #ff424e 0%, #ff8a00 50%, #ffbe00 100%);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(255, 66, 78, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Background Tropical Tech glowing shapes */
+.wrapper::before {
+  content: "";
+  position: absolute;
+  top: -100px;
+  right: -100px;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* --- Header Section --- */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 0 10px;
+  color: #fff;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.flashIcon {
+  font-size: 28px;
+  color: #ffeb3b;
+  animation: pulseFlash 1.5s infinite ease-in-out;
+  filter: drop-shadow(0 2px 8px rgba(255, 235, 59, 0.6));
+}
+
+@keyframes pulseFlash {
+  0%, 100% { transform: scale(1) rotate(0deg); filter: brightness(1); }
+  50% { transform: scale(1.2) rotate(15deg); filter: brightness(1.3); }
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.timerContainer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.timerText {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.timer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.timeGroup {
+  display: flex;
+  gap: 2px;
+}
+
+.colon {
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+  animation: blinkColon 1s infinite steps(2, start);
+  padding: 0 2px;
+}
+
+@keyframes blinkColon {
+  to { visibility: hidden; }
+}
+
+/* 3D Flip Digits styling */
+.flipDigit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 28px;
+  background: #18181b;
+  color: #ffeb3b;
+  font-size: 15px;
+  font-weight: 800;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  position: relative;
+  perspective: 100px;
+  border: 1px solid #27272a;
+}
+
+.flipDigit.flip {
+  animation: flipCard 0.15s ease-in-out forwards;
+}
+
+@keyframes flipCard {
+  0% { transform: rotateX(0deg); }
+  50% { transform: rotateX(-90deg); filter: brightness(1.2); }
+  100% { transform: rotateX(0deg); }
+}
+
+.headerRight {
+  background: rgba(255, 255, 255, 0.18);
+  padding: 6px 16px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* --- Products Grid --- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* --- Flash Sale Card --- */
+.card {
+  background: var(--tiki-white);
+  border-radius: 12px;
+  overflow: hidden;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.cardThumb {
+  aspect-ratio: 1;
+  width: 100%;
+  position: relative;
+  background: #fafafc;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.cardImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.card:hover .cardImg {
+  transform: scale(1.05);
+}
+
+.discountBadge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: #ff424e;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  z-index: 2;
+  box-shadow: 0 2px 6px rgba(255, 66, 78, 0.4);
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.cardTitle {
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  height: 2.8em;
+}
+
+.priceRow {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.price {
+  font-size: 17px;
+  font-weight: 700;
+  color: #ff424e;
+}
+
+.oldPrice {
+  font-size: 11.5px;
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+/* --- Progress Bar --- */
+.progressContainer {
+  height: 16px;
+  background: #ffe5e7;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: auto;
+}
+
+.progressBar {
+  height: 100%;
+  background: linear-gradient(90deg, #ff424e 0%, #ff8a00 100%);
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 8px;
+  transition: width 0.5s ease-out;
+}
+
+.progressText {
+  position: relative;
+  font-size: 9px;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  z-index: 2;
+  text-transform: uppercase;
+}
+
+/* --- View More Pill Button --- */
+.actionContainer {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.viewMoreBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 260px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ff424e;
+  background: #fff;
+  border-radius: var(--radius-pill);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease, color 0.25s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  border: 2px solid transparent;
+}
+
+.viewMoreBtn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.5), 0 4px 16px rgba(0, 0, 0, 0.15);
+  background: #18181b;
+  color: #fffeb8;
+}
+
+.viewMoreBtn:active {
+  transform: translateY(-1px);
+}
+
+/* --- Skeleton --- */
+.cardSkeleton {
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cardSkeletonThumb {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  width: 100%;
+}
+
+.cardSkeletonLine {
+  height: 12px;
+  border-radius: 4px;
+}

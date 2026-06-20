@@ -121,8 +121,30 @@ export const api = {
   cancelOrder: (id: string) =>
     request<import("./types").Order>(`/api/orders/${encodeURIComponent(id)}/cancel`, { method: "POST" }),
 
-  checkout: (body: { address: string; phone: string; cartItemIds?: string[] }) =>
+  checkout: (body: { 
+    address: string; 
+    phone: string; 
+    cartItemIds?: string[];
+    provinceId?: string;
+    provinceName?: string;
+    districtId?: string;
+    districtName?: string;
+    wardId?: string;
+    wardName?: string;
+    streetAddress?: string;
+    addressType?: string;
+    voucherCode?: string;
+  }) =>
     request<import("./types").Order>("/api/orders/checkout", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  calculateShipping: (body: {
+    provinceCode: string;
+    items: Array<{ productId: string; quantity: number }>;
+  }) =>
+    request<{ shippingFee: number }>("/api/checkout/calculate-shipping", {
       method: "POST",
       body: JSON.stringify(body),
     }),
@@ -289,5 +311,192 @@ export const api = {
   transfers: () => request<any[]>("/api/inventory/transfers"),
   createTransfer: (body: any) => request<any>("/api/inventory/transfers", { method: "POST", body: JSON.stringify(body) }),
   reconciliation: () => request<{ timestamp: string; integrityScore: number; discrepancies: any[] }>("/api/inventory/reconciliation"),
+
+  // Admin Logistics/Deliveries
+  adminDeliveries: (params?: { page?: number; limit?: number; status?: string; q?: string }) => {
+    const q = new URLSearchParams();
+    if (params?.page != null) q.set("page", String(params.page));
+    if (params?.limit != null) q.set("limit", String(params.limit));
+    if (params?.status) q.set("status", params.status);
+    if (params?.q) q.set("q", params.q);
+    const qs = q.toString();
+    return request<{
+      items: import("./types").DeliveryOrder[];
+      pagination: { page: number; limit: number; total: number; totalPages: number };
+    }>(`/api/admin/deliveries${qs ? `?${qs}` : ""}`);
+  },
+
+  adminPatchDeliveryStatus: (id: string, status: import("./types").DeliveryStatus) =>
+    request<import("./types").DeliveryOrder>(`/api/admin/deliveries/${encodeURIComponent(id)}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    }),
+
+  // Admin Returns
+  adminReturns: (params?: { page?: number; limit?: number; status?: string }) => {
+    const q = new URLSearchParams();
+    if (params?.page != null) q.set("page", String(params.page));
+    if (params?.limit != null) q.set("limit", String(params.limit));
+    if (params?.status) q.set("status", params.status);
+    const qs = q.toString();
+    return request<{
+      items: any[];
+      pagination: { page: number; limit: number; total: number; totalPages: number };
+    }>(`/api/returns/admin/list${qs ? `?${qs}` : ""}`);
+  },
+
+  adminReturnDetail: (id: string) =>
+    request<any>(`/api/returns/admin/${encodeURIComponent(id)}`),
+
+  adminApproveReturn: (id: string) =>
+    request<any>(`/api/returns/admin/${encodeURIComponent(id)}/approve`, { method: "POST" }),
+
+  adminRejectReturn: (id: string) =>
+    request<any>(`/api/returns/admin/${encodeURIComponent(id)}/reject`, { method: "POST" }),
+
+  adminReceiveReturn: (id: string, items: Array<{ product_id: string; return_quantity: number; condition: string }>) =>
+    request<any>(`/api/returns/admin/${encodeURIComponent(id)}/receive`, {
+      method: "POST",
+      body: JSON.stringify({ items }),
+    }),
+
+  // Admin Reviews
+  adminReviews: (params?: { page?: number; pageSize?: number; status?: string }) => {
+    const q = new URLSearchParams();
+    if (params?.page != null) q.set("page", String(params.page));
+    if (params?.pageSize != null) q.set("pageSize", String(params.pageSize));
+    if (params?.status) q.set("status", params.status);
+    const qs = q.toString();
+    return request<{ reviews: any[]; total: number }>(`/api/admin/reviews${qs ? `?${qs}` : ""}`);
+  },
+
+  adminPatchReviewStatus: (id: string, status: "APPROVED" | "REJECTED") =>
+    request<any>(`/api/admin/reviews/${encodeURIComponent(id)}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    }),
+
+  adminReplyReview: (id: string, adminReply: string) =>
+    request<any>(`/api/admin/reviews/${encodeURIComponent(id)}/reply`, {
+      method: "PATCH",
+      body: JSON.stringify({ adminReply }),
+    }),
+
+  // Admin Vouchers
+  adminVouchers: (params?: { page?: number; limit?: number; search?: string }) => {
+    const q = new URLSearchParams();
+    if (params?.page != null) q.set("page", String(params.page));
+    if (params?.limit != null) q.set("limit", String(params.limit));
+    if (params?.search) q.set("search", params.search);
+    const qs = q.toString();
+    return request<{
+      items: any[];
+      pagination: { page: number; limit: number; total: number; totalPages: number };
+    }>(`/api/vouchers/admin/list${qs ? `?${qs}` : ""}`);
+  },
+
+  adminPatchVoucherStatus: (id: string, status: string) =>
+    request<any>(`/api/vouchers/admin/${encodeURIComponent(id)}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    }),
+
+  adminCreateVoucher: (body: any) =>
+    request<any>("/api/vouchers/admin/create", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  applyVoucher: (body: { code: string; order_amount: number }) =>
+    request<{
+      code: string;
+      discount_type: string;
+      discount_value: number;
+      discount_amount: number;
+      final_amount: number;
+    }>("/api/vouchers/apply", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  // Seller
+  sellerRegister: (body: {
+    shopName: string;
+    taxCode?: string;
+    idCard?: string;
+    businessAddress: string;
+    bankAccount?: string;
+  }) =>
+    request<import("./types").Shop>("/api/seller/register", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  sellerMyShop: () => request<import("./types").Shop | null>("/api/seller/my-shop"),
+
+  // Admin Shops
+  adminShops: (params?: { page?: number; limit?: number; status?: string; q?: string }) => {
+    const q = new URLSearchParams();
+    if (params?.page != null) q.set("page", String(params.page));
+    if (params?.limit != null) q.set("limit", String(params.limit));
+    if (params?.status) q.set("status", params.status);
+    if (params?.q) q.set("q", params.q);
+    const qs = q.toString();
+    return request<{
+      items: import("./types").Shop[];
+      pagination: { page: number; limit: number; total: number; totalPages: number };
+    }>(`/api/admin/shops${qs ? `?${qs}` : ""}`);
+  },
+
+  adminApproveShop: (id: string) =>
+    request<import("./types").Shop>(`/api/admin/shops/${encodeURIComponent(id)}/approve`, {
+      method: "PATCH",
+    }),
+
+  adminRejectShop: (id: string, reason?: string) =>
+    request<import("./types").Shop>(`/api/admin/shops/${encodeURIComponent(id)}/reject`, {
+      method: "PATCH",
+      body: JSON.stringify({ reason }),
+    }),
+
+  createReview: (body: {
+    productId: string;
+    rating: number;
+    comment?: string;
+    imageUrls?: string[];
+    orderId: string;
+  }) =>
+    request<any>("/api/reviews", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  getProductReviews: (
+    productId: string,
+    params?: { page?: number; pageSize?: number }
+  ) => {
+    const q = new URLSearchParams();
+    if (params?.page != null) q.set("page", String(params.page));
+    if (params?.pageSize != null) q.set("pageSize", String(params.pageSize));
+    const qs = q.toString();
+    return request<any>(
+      `/api/reviews/product/${encodeURIComponent(productId)}${qs ? `?${qs}` : ""}`
+    );
+  },
+
+  getOrderReviews: (orderId: string) =>
+    request<any[]>(`/api/reviews/order/${encodeURIComponent(orderId)}`),
+
+  createReturn: (body: {
+    order_id: string;
+    reason: string;
+    items: Array<{ product_id: string; return_quantity: number }>;
+  }) =>
+    request<any>("/api/returns", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  getReturns: () => request<any[]>("/api/returns"),
 };
 

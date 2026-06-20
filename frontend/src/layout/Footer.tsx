@@ -6,65 +6,95 @@ export default function Footer() {
       <div className={styles.top}>
         <div className="container">
           <div className={styles.grid}>
+            {/* Column 1: CATEGORIES */}
             <div className={styles.col}>
-              <h3 className={styles.heading}>Hỗ trợ khách hàng</h3>
+              <h3 className={styles.heading}>CATEGORIES</h3>
+              <ul className={styles.links}>
+                <li>
+                  <a href="/tim-kiem?q=thời trang">Fashion & Apparel</a>
+                </li>
+                <li>
+                  <a href="/danh-muc/dien-tu-dien-may">Tech Island Gadgets</a>
+                </li>
+                <li>
+                  <a href="/tim-kiem?q=tai nghe">Audio & Accessories</a>
+                </li>
+                <li>
+                  <a href="/tim-kiem?q=sách">Books & Stationery</a>
+                </li>
+                <li>
+                  <a href="/tim-kiem?q=gia dụng">Home Appliances</a>
+                </li>
+                <li>
+                  <a href="/tim-kiem?q=mỹ phẩm">Beauty & Personal Care</a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Column 2: CUSTOMER SERVICE */}
+            <div className={styles.col}>
+              <h3 className={styles.heading}>CUSTOMER SERVICE</h3>
               <p className={styles.hotline}>
                 Hotline: <a href="tel:19006035">1900 6035</a>
                 <span className={styles.small}>(1000đ/phút, 8h-21h kể cả T7, CN)</span>
               </p>
               <ul className={styles.links}>
                 <li>
-                  <a href="#footer">Các câu hỏi thường gặp</a>
+                  <a href="#footer">Frequently Asked Questions</a>
                 </li>
                 <li>
-                  <a href="#footer">Gửi yêu cầu hỗ trợ</a>
+                  <a href="#footer">Submit Support Ticket</a>
                 </li>
                 <li>
-                  <a href="#footer">Hướng dẫn đặt hàng</a>
+                  <a href="#footer">Ordering Guide</a>
                 </li>
                 <li>
-                  <a href="#footer">Phương thức vận chuyển</a>
+                  <a href="#footer">Tropical Shipping Methods</a>
+                </li>
+                <li>
+                  <a href="#footer">Return & Refund Policy</a>
                 </li>
               </ul>
             </div>
-            <div className={styles.col}>
-              <h3 className={styles.heading}>Về Tiki</h3>
-              <ul className={styles.links}>
-                <li>
-                  <a href="#footer">Giới thiệu</a>
-                </li>
-                <li>
-                  <a href="#footer">Tiki Blog</a>
-                </li>
-                <li>
-                  <a href="#footer">Tuyển dụng</a>
-                </li>
-                <li>
-                  <a href="#footer">Chính sách bảo mật</a>
-                </li>
-              </ul>
-            </div>
-            <div className={styles.col}>
-              <h3 className={styles.heading}>Thanh toán</h3>
-              <div className={styles.payRow} aria-hidden>
-                <span className={styles.payBadge}>COD</span>
-                <span className={styles.payBadge}>VISA</span>
-                <span className={styles.payBadge}>ATM</span>
+
+            {/* Column 3: stylized wave-pattern newsletter signup form */}
+            <div className={`${styles.col} ${styles.newsletterCol}`}>
+              <h3 className={styles.heading}>NEWSLETTER</h3>
+              <p className={styles.newsDesc}>
+                Đăng ký ngay để nhận các thông tin ưu đãi nhiệt đới hấp dẫn nhất từ Tiki.
+              </p>
+              <form className={styles.subscribeForm} onSubmit={(e) => { e.preventDefault(); alert("Cảm ơn bạn đã đăng ký!"); }}>
+                <div className={styles.inputContainer}>
+                  <input
+                    type="email"
+                    placeholder="Nhập email của bạn..."
+                    className={styles.newsInput}
+                    required
+                  />
+                  <button type="submit" className={styles.newsBtn}>
+                    Đăng ký
+                  </button>
+                </div>
+              </form>
+              <div className={styles.waveContainer}>
+                <svg className={styles.waveLayer1} viewBox="0 0 120 28" preserveAspectRatio="none">
+                  <use xlinkHref="#wave-path-root" x="0" y="0" fill="rgba(26, 148, 255, 0.12)" />
+                </svg>
+                <svg className={styles.waveLayer2} viewBox="0 0 120 28" preserveAspectRatio="none">
+                  <use xlinkHref="#wave-path-root" x="-30" y="2" fill="rgba(26, 148, 255, 0.22)" />
+                </svg>
+                <svg className={styles.waveLayer3} viewBox="0 0 120 28" preserveAspectRatio="none">
+                  <use xlinkHref="#wave-path-root" x="-70" y="4" fill="rgba(26, 148, 255, 0.45)" />
+                </svg>
+                <svg style={{ display: "none" }}>
+                  <defs>
+                    <path
+                      id="wave-path-root"
+                      d="M 0,10 C 30,10 30,15 60,15 90,15 90,10 120,10 150,10 150,15 180,15 210,15 210,10 240,10 v 28 h -240 z"
+                    />
+                  </defs>
+                </svg>
               </div>
-              <h3 className={`${styles.heading} ${styles.headingSp}`}>Tải ứng dụng</h3>
-              <p className={styles.appHint}>QR demo — mở trên điện thoại</p>
-              <div className={styles.qr} aria-hidden>
-                <div className={styles.qrInner} />
-              </div>
-            </div>
-            <div className={styles.col}>
-              <h3 className={styles.heading}>Kết nối với chúng tôi</h3>
-              <div className={styles.social}>
-                <span className={styles.soc}>f</span>
-                <span className={styles.soc}>◎</span>
-                <span className={styles.soc}>▶</span>
-              </div>
-              <p className={styles.cert}>Chứng nhận demo — giao diện tham khảo Tiki</p>
             </div>
           </div>
         </div>
@@ -72,11 +102,11 @@ export default function Footer() {
       <div className={styles.bottom}>
         <div className="container">
           <p className={styles.company}>
-            Công ty TNHH MTV Thương mại demo — GPĐKKD tham khảo giao diện Tiki. Địa chỉ: Thành phố Hà
-            Nội, Việt Nam.
+            Tiki Clone — Hòn Đảo Nhiệt Đới Công Nghệ. Giao diện được thiết kế hiện đại, sống động và
+            đầy màu sắc lấy cảm hứng từ phong cách Tiki.
           </p>
           <p className={styles.copy}>
-            © {new Date().getFullYear()} — Bản demo học tập. API:{" "}
+            © {new Date().getFullYear()} — Bản thiết kế Premium. API Docs:{" "}
             <a href="/api-docs" target="_blank" rel="noreferrer">
               /api-docs
             </a>
@@ -86,3 +116,4 @@ export default function Footer() {
     </footer>
   );
 }
+

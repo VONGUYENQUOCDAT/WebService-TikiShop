@@ -40,6 +40,36 @@ export default function AdminLayout() {
           >
             Người dùng
           </NavLink>
+          <NavLink
+            to="/admin/gian-hang"
+            className={({ isActive }) => (isActive ? styles.navLinkActive : styles.navLink)}
+          >
+            Duyệt gian hàng
+          </NavLink>
+          <NavLink
+            to="/admin/vouchers"
+            className={({ isActive }) => (isActive ? styles.navLinkActive : styles.navLink)}
+          >
+            Khuyến mãi (Voucher)
+          </NavLink>
+          <NavLink
+            to="/admin/deliveries"
+            className={({ isActive }) => (isActive ? styles.navLinkActive : styles.navLink)}
+          >
+            Vận chuyển (Deliveries)
+          </NavLink>
+          <NavLink
+            to="/admin/returns"
+            className={({ isActive }) => (isActive ? styles.navLinkActive : styles.navLink)}
+          >
+            Yêu cầu Đổi trả (Returns)
+          </NavLink>
+          <NavLink
+            to="/admin/reviews"
+            className={({ isActive }) => (isActive ? styles.navLinkActive : styles.navLink)}
+          >
+            Quản lý Đánh giá
+          </NavLink>
           
           <div className={styles.navSectionHeader}>Quản lý Tồn kho & PO</div>
           

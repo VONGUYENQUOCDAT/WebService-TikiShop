@@ -1,4 +1,3 @@
-import { motion, useReducedMotion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import type { Product } from "@/shared/api/types";
 import { highlightText } from "@/shared/lib/highlight";
@@ -17,7 +16,6 @@ export default function ProductCard({
   product: Product;
   highlightQuery?: string;
 }) {
-  const reduce = useReducedMotion();
   const navigate = useNavigate();
   const token = useAuthStore((s) => s.token);
   const toast = useToast();
@@ -50,18 +48,7 @@ export default function ProductCard({
   };
 
   return (
-    <motion.article
-      className={styles.card}
-      whileHover={
-        reduce
-          ? undefined
-          : {
-              y: -4,
-              transition: { type: "spring", stiffness: 400, damping: 30 },
-            }
-      }
-      whileTap={reduce ? undefined : { scale: 0.985 }}
-    >
+    <article className={styles.card}>
       <Link to={`/p/${product.slug}`} className={styles.thumb}>
         {product.badge && (
           <span
@@ -75,13 +62,19 @@ export default function ProductCard({
         {discount != null && discount > 0 && (
           <span className={styles.discountPill}>-{discount}%</span>
         )}
-        <motion.div
-          className={styles.imgWrap}
-          whileHover={reduce ? undefined : { scale: 1.05 }}
-          transition={{ type: "spring", stiffness: 350, damping: 26 }}
-        >
+        <div className={styles.imgWrap}>
           <ImageWithFallback src={product.image} alt={product.name} width={280} height={280} />
-        </motion.div>
+        </div>
+        <div className={styles.cartOverlay}>
+          <button
+            type="button"
+            className={styles.overlayAddBtn}
+            onClick={handleAddToCart}
+            aria-label={`Thêm ${product.name} vào giỏ hàng`}
+          >
+            Thêm vào giỏ
+          </button>
+        </div>
       </Link>
       <div className={styles.body}>
         <p className={styles.official}>
@@ -122,6 +115,6 @@ export default function ProductCard({
           </button>
         </div>
       </div>
-    </motion.article>
+    </article>
   );
 }

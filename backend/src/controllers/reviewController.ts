@@ -128,13 +128,34 @@ router.get("/product/:productId", async (req, res) => {
   ]);
 
   const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-  ratingsGroup.forEach((g) => {
+  ratingsGroup.forEach((g: any) => {
     if (g.rating >= 1 && g.rating <= 5) {
       distribution[g.rating as 1 | 2 | 3 | 4 | 5] = g._count.rating;
     }
   });
 
   res.json({ reviews, total, page, pageSize, distribution });
+});
+
+/**
+ * @openapi
+ * /api/reviews/order/{orderId}:
+ *   get:
+ *     tags: [Reviews]
+ *     summary: Get user's reviews for a specific order (customer only)
+ *     security: [{ bearerAuth: [] }]
+ */
+router.get("/order/:orderId", authRequired, async (req, res) => {
+  const { orderId } = req.params;
+  const userId = req.user!.userId;
+  try {
+    const reviews = await prisma.review.findMany({
+      where: { orderId: orderId as string, userId: userId as string },
+    });
+    res.json(reviews);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Failed to fetch order reviews" });
+  }
 });
 
 export default router;

@@ -12,6 +12,10 @@ const cats = [
   { name: "Sách - VPP", slug: "sach-vpp", icon: "📚" },
   { name: "Làm đẹp - Sức khỏe", slug: "lam-dep-suc-khoe", icon: "💄" },
   { name: "Thể thao - Dã ngoại", slug: "the-thao-da-ngoai", icon: "⚽" },
+  { name: "Bách hóa online", slug: "bach-hoa-online", icon: "🛒" },
+  { name: "Mẹ & Bé", slug: "me-be", icon: "👶" },
+  { name: "Đồ chơi - Quà tặng", slug: "do-choi-qua-tang", icon: "🧸" },
+  { name: "Phụ kiện số", slug: "phu-kien-so", icon: "🎧" },
 ];
 
 function p(
@@ -47,6 +51,10 @@ function p(
 async function main() {
   // 1. Clean up all tables in reverse dependency order
   console.log("Cleaning up database...");
+  await prisma.userVoucherHistory.deleteMany().catch(() => {});
+  await prisma.voucher.deleteMany().catch(() => {});
+  await prisma.address.deleteMany().catch(() => {});
+  await prisma.deliveryOrder.deleteMany().catch(() => {});
   await prisma.stockTransferItem.deleteMany();
   await prisma.stockTransfer.deleteMany();
   await prisma.inventoryLedger.deleteMany();
@@ -62,6 +70,7 @@ async function main() {
   await prisma.order.deleteMany();
   await prisma.cartItem.deleteMany();
   await prisma.product.deleteMany();
+  await prisma.shop.deleteMany().catch(() => {});
   await prisma.category.deleteMany();
 
   // 2. Create Default Branches
@@ -806,6 +815,146 @@ async function main() {
       null,
       "lam-dep-suc-khoe"
     ),
+    p(
+      "Nước ngọt Coca-Cola vị nguyên bản 24 lon 320ml",
+      "coca-cola-24-lon",
+      "Thùng 24 lon nước ngọt giải khát hương vị truyền thống độc đáo.",
+      185000,
+      210000,
+      4.9,
+      4500,
+      12000,
+      "TikiNOW",
+      "bach-hoa-online",
+      "Coca-Cola",
+      "nước ngọt,giải khát,coca"
+    ),
+    p(
+      "Mì tôm Hảo Hảo chua cay Acecook gói 75g",
+      "mi-hao-hao-chua-cay",
+      "Thùng 30 gói mì tôm ăn liền Hảo Hảo hương vị tôm chua cay thơm ngon.",
+      135000,
+      150000,
+      4.8,
+      9500,
+      28000,
+      "Bán chạy",
+      "bach-hoa-online",
+      "Acecook",
+      "mì ăn liền,mì gói,hảo hảo"
+    ),
+    p(
+      "Sữa tươi tiệt trùng Vinamilk ít đường 1L",
+      "sua-tuoi-vinamilk-1l",
+      "Hộp 1 lít sữa tươi tiệt trùng 100% nguyên chất ít đường bổ dưỡng.",
+      34000,
+      38000,
+      4.7,
+      1800,
+      4500,
+      null,
+      "bach-hoa-online",
+      "Vinamilk",
+      "sữa tươi,dinh dưỡng,vinamilk"
+    ),
+    p(
+      "Tã quần Bobby Extra Soft-Dry size L 54 miếng",
+      "ta-quan-bobby-l54",
+      "Bột bông siêu thấm hút, bề mặt 3D êm mềm cho bé từ 9-14kg.",
+      249000,
+      315000,
+      4.8,
+      1200,
+      3600,
+      "Hàng hiệu",
+      "me-be",
+      "Bobby",
+      "tã quần,bỉm,bobby"
+    ),
+    p(
+      "Sữa bột Similac 5G số 3 900g",
+      "sua-similac-5g-so-3",
+      "Dành cho trẻ từ 1-3 tuổi, bổ sung dinh dưỡng giúp trẻ thông minh, đề kháng tốt.",
+      495000,
+      560000,
+      4.9,
+      850,
+      2100,
+      "TikiNOW",
+      "me-be",
+      "Abbott",
+      "sữa bột,similac,dinh dưỡng"
+    ),
+    p(
+      "Bộ xếp hình LEGO Classic Thùng Gạch Sáng Tạo (790 chi tiết)",
+      "lego-classic-10698",
+      "Thỏa sức sáng tạo lắp ráp các mô hình độc đáo từ 790 khối gạch đa màu sắc.",
+      1190000,
+      1590000,
+      4.9,
+      950,
+      2400,
+      "Bán chạy",
+      "do-choi-qua-tang",
+      "LEGO",
+      "đồ chơi,lắp ráp,lego"
+    ),
+    p(
+      "Búp bê Barbie Công chúa lấp lánh xinh đẹp",
+      "bup-be-barbie-cong-chua",
+      "Thiết kế đầm dạ hội rực rỡ lấp lánh cho bé thỏa sức đóng vai.",
+      299000,
+      399000,
+      4.7,
+      320,
+      1100,
+      null,
+      "do-choi-qua-tang",
+      "Barbie",
+      "đồ chơi,búp bê,barbie"
+    ),
+    p(
+      "Chuột không dây Logitech MX Master 3S",
+      "chuot-logitech-mx-master-3s",
+      "Cảm biến 8000 DPI, cuộn MagSpeed siêu nhanh, kết nối đa thiết bị.",
+      2490000,
+      2990000,
+      4.9,
+      890,
+      3200,
+      "Hàng hiệu",
+      "phu-kien-so",
+      "Logitech",
+      "chuột máy tính,không dây,logitech"
+    ),
+    p(
+      "Bàn phím cơ Keychron K2 V2 Cực Đẹp",
+      "ban-phim-co-keychron-k2",
+      "Layout 84 phím nhỏ gọn, đèn nền RGB cá tính, kết nối Bluetooth/Type-C.",
+      1890000,
+      2190000,
+      4.8,
+      640,
+      1500,
+      "Mới",
+      "phu-kien-so",
+      "Keychron",
+      "bàn phím cơ,bluetooth,keychron"
+    ),
+    p(
+      "Sạc dự phòng Anker PowerCore 20000mAh",
+      "sac-du-phong-anker-20000",
+      "Sạc nhanh PowerIQ, dung lượng cực khủng, an toàn tuyệt đối.",
+      690000,
+      890000,
+      4.8,
+      1500,
+      4200,
+      "TikiNOW",
+      "phu-kien-so",
+      "Anker",
+      "sạc dự phòng,phụ kiện,anker"
+    ),
   ];
 
   const imageUrls: Record<string, string> = {
@@ -864,6 +1013,16 @@ async function main() {
     "leu-cam-trai-4-nguoi": "https://images.unsplash.com/photo-1504280390368-3971d6b8d4c1?w=280&h=280&fit=crop",
     "giay-adidas-ultraboost": "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?w=280&h=280&fit=crop",
     "balo-osprey-50l": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=280&h=280&fit=crop",
+    "coca-cola-24-lon": "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=280&h=280&fit=crop",
+    "mi-hao-hao-chua-cay": "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=280&h=280&fit=crop",
+    "sua-tuoi-vinamilk-1l": "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=280&h=280&fit=crop",
+    "ta-quan-bobby-l54": "https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=280&h=280&fit=crop",
+    "sua-similac-5g-so-3": "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=280&h=280&fit=crop",
+    "lego-classic-10698": "https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=280&h=280&fit=crop",
+    "bup-be-barbie-cong-chua": "https://images.unsplash.com/photo-1559251606-c623743a6d76?w=280&h=280&fit=crop",
+    "chuot-logitech-mx-master-3s": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=280&h=280&fit=crop",
+    "ban-phim-co-keychron-k2": "https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=280&h=280&fit=crop",
+    "sac-du-phong-anker-20000": "https://images.unsplash.com/photo-1609592424089-a2ad6118cd2b?w=280&h=280&fit=crop",
   };
 
   // 6. Create Products, link Branch Products with 0 stock
@@ -897,7 +1056,14 @@ async function main() {
       },
     });
 
-    createdProducts.push({ id: pRow.id, name: pRow.name, sku: pRow.sku!, brand: pRow.brand });
+    createdProducts.push({
+      id: pRow.id,
+      name: pRow.name,
+      sku: pRow.sku!,
+      brand: pRow.brand,
+      categorySlug: x.categoryId,
+      price: pRow.price
+    });
 
     // Enforce: Initialize stock for all branches at exactly 0
     for (const br of branches) {
@@ -912,155 +1078,153 @@ async function main() {
     }
   }
 
-  // 7. Seed one Sample Purchase Order and Goods Receipt to generate audit history and non-zero stock
-  console.log("Seeding Sample Purchase Order & Goods Receipt (Audit Trail)...");
-  // Let's procure "iPhone 15 128GB" and "Sách Đắc Nhân Tâm (bìa cứng)" from Apple and Vinamilk suppliers
-  const pIphone = createdProducts.find(item => item.name.includes("iPhone 15"));
-  const pSach = createdProducts.find(item => item.name.includes("Đắc Nhân Tâm"));
+  // 7. Seed Dynamic Purchase Orders and Goods Receipts for all products
+  console.log("Seeding Purchase Orders, Goods Receipts, Batches & Ledgers (Audit Trail)...");
+  
+  function getSupplierForProduct(brand: string | null, categorySlug: string, name: string) {
+    const b = (brand || "").toLowerCase();
+    const n = name.toLowerCase();
+    const c = categorySlug.toLowerCase();
+    
+    if (b.includes("apple") || b.includes("iphone") || b.includes("ipad") || b.includes("macbook")) {
+      return supApple;
+    }
+    if (b.includes("samsung")) {
+      return supSamsung;
+    }
+    if (
+      b.includes("coolmate") || 
+      c.includes("thoi-trang") || 
+      n.includes("áo") || 
+      n.includes("quần") || 
+      n.includes("váy") || 
+      n.includes("dép") || 
+      n.includes("mũ")
+    ) {
+      return supCoolmate;
+    }
+    if (
+      b.includes("coca") || 
+      b.includes("acecook") || 
+      n.includes("coca") || 
+      n.includes("mì") || 
+      n.includes("nước ngọt") ||
+      c.includes("bach-hoa")
+    ) {
+      return supCoca;
+    }
+    // Fallback supplier (handles Vinamilk, books, cosmetics, sports gears, etc.)
+    return supVinamilk;
+  }
 
-  if (pIphone && pSach) {
-    // PO 1: procuring iPhones from Apple VN
-    const po1 = await prisma.purchaseOrder.create({
+  const productsBySupplier: Record<string, { supplier: any; items: typeof createdProducts }> = {};
+  
+  // Group all created products by supplier
+  for (const prod of createdProducts) {
+    const supplier = getSupplierForProduct(prod.brand, prod.categorySlug, prod.name);
+    if (!productsBySupplier[supplier.id]) {
+      productsBySupplier[supplier.id] = { supplier, items: [] };
+    }
+    productsBySupplier[supplier.id].items.push(prod);
+  }
+
+  let poCount = 1;
+  let grCount = 1;
+  let batchCount = 1;
+  
+  for (const supId of Object.keys(productsBySupplier)) {
+    const { supplier, items } = productsBySupplier[supId];
+    if (items.length === 0) continue;
+    
+    const poNumber = `PO-2026-${String(poCount++).padStart(4, "0")}`;
+    
+    // Create Purchase Order for this supplier with all its products (procure 150 of each)
+    const po = await prisma.purchaseOrder.create({
       data: {
-        poNumber: "PO-2026-0001",
-        supplierId: supApple.id,
-        status: "COMPLETED", // Transitioned directly to completed for seeding
-        approvedAt: new Date(),
-        approvedById: "seed-process",
-        items: {
-          create: [
-            { productId: pIphone.id, quantityOrdered: 50, pricePerUnit: 18000000 }
-          ]
-        }
-      }
-    });
-
-    // Goods Receipt for PO 1
-    const gr1 = await prisma.goodsReceipt.create({
-      data: {
-        grNumber: "GR-2026-0001",
-        purchaseOrderId: po1.id,
-        branchId: branchD7.id,
-        receivedById: "seed-process",
-        receivedDate: new Date(),
-        items: {
-          create: [
-            { productId: pIphone.id, qtyReceived: 50, qtyDamaged: 0 }
-          ]
-        }
-      },
-      include: { items: true }
-    });
-
-    // Create Batch & Ledger entries for gr1 (Branch Quận 7)
-    const gr1Item = gr1.items[0];
-    const batch1 = await prisma.inventoryBatch.create({
-      data: {
-        batchNumber: "BAT-IP15-001",
-        goodsReceiptItemId: gr1Item.id,
-        productId: pIphone.id,
-        supplierId: supApple.id,
-        branchId: branchD7.id,
-        mfgDate: new Date("2026-01-01"),
-        expiryDate: new Date("2028-01-01"),
-        initialQty: 50,
-        remainingQty: 50
-      }
-    });
-
-    // Write Ledger
-    await prisma.inventoryLedger.create({
-      data: {
-        productId: pIphone.id,
-        branchId: branchD7.id,
-        batchId: batch1.id,
-        movementType: "PURCHASE_RECEIPT",
-        qtyChange: 50,
-        balanceAfter: 50,
-        sourceDocId: gr1.id
-      }
-    });
-
-    // Update BranchProduct Stock
-    await prisma.branchProduct.update({
-      where: {
-        branchId_productId: {
-          branchId: branchD7.id,
-          productId: pIphone.id
-        }
-      },
-      data: { stock: 50 }
-    });
-
-    // PO 2: procuring books from Vinamilk (mocking supplier connection for demo purposes)
-    const po2 = await prisma.purchaseOrder.create({
-      data: {
-        poNumber: "PO-2026-0002",
-        supplierId: supVinamilk.id,
+        poNumber,
+        supplierId: supplier.id,
         status: "COMPLETED",
         approvedAt: new Date(),
         approvedById: "seed-process",
         items: {
-          create: [
-            { productId: pSach.id, quantityOrdered: 200, pricePerUnit: 50000 }
-          ]
+          create: items.map(item => ({
+            productId: item.id,
+            quantityOrdered: 150,
+            pricePerUnit: Math.round(item.price * 0.7)
+          }))
         }
       }
     });
-
-    const gr2 = await prisma.goodsReceipt.create({
-      data: {
-        grNumber: "GR-2026-0002",
-        purchaseOrderId: po2.id,
-        branchId: branchGV.id,
-        receivedById: "seed-process",
-        receivedDate: new Date(),
-        items: {
-          create: [
-            { productId: pSach.id, qtyReceived: 200, qtyDamaged: 0 }
-          ]
-        }
-      },
-      include: { items: true }
-    });
-
-    const gr2Item = gr2.items[0];
-    // Batch for Books (Tiki Shop Gò Vấp)
-    const batch2 = await prisma.inventoryBatch.create({
-      data: {
-        batchNumber: "BAT-DNT-001",
-        goodsReceiptItemId: gr2Item.id,
-        productId: pSach.id,
-        supplierId: supVinamilk.id,
-        branchId: branchGV.id,
-        mfgDate: new Date("2026-05-01"),
-        expiryDate: new Date("2027-05-01"),
-        initialQty: 200,
-        remainingQty: 200
+    
+    // Create Goods Receipts for each branch
+    for (let bIdx = 0; bIdx < branches.length; bIdx++) {
+      const branch = branches[bIdx];
+      const grNumber = `GR-2026-${String(grCount++).padStart(4, "0")}`;
+      
+      const gr = await prisma.goodsReceipt.create({
+        data: {
+          grNumber,
+          purchaseOrderId: po.id,
+          branchId: branch.id,
+          receivedById: "seed-process",
+          receivedDate: new Date(),
+          items: {
+            create: items.map(item => ({
+              productId: item.id,
+              qtyReceived: 50,
+              qtyDamaged: 0
+            }))
+          }
+        },
+        include: { items: true }
+      });
+      
+      // Create Batch, Ledger, and update BranchProduct stock for each item in the goods receipt
+      for (const grItem of gr.items) {
+        const product = items.find(i => i.id === grItem.productId);
+        if (!product) continue;
+        
+        const batchNum = `BAT-${product.sku}-${bIdx + 1}-${String(batchCount++).padStart(4, "0")}`;
+        
+        const batch = await prisma.inventoryBatch.create({
+          data: {
+            batchNumber: batchNum,
+            goodsReceiptItemId: grItem.id,
+            productId: grItem.productId,
+            supplierId: supplier.id,
+            branchId: branch.id,
+            mfgDate: new Date("2026-01-01"),
+            expiryDate: new Date("2029-01-01"), // Long expiration date for demo
+            initialQty: 50,
+            remainingQty: 50
+          }
+        });
+        
+        // Write Inventory Ledger
+        await prisma.inventoryLedger.create({
+          data: {
+            productId: grItem.productId,
+            branchId: branch.id,
+            batchId: batch.id,
+            movementType: "PURCHASE_RECEIPT",
+            qtyChange: 50,
+            balanceAfter: 50,
+            sourceDocId: gr.id
+          }
+        });
+        
+        // Update BranchProduct stock to 50
+        await prisma.branchProduct.update({
+          where: {
+            branchId_productId: {
+              branchId: branch.id,
+              productId: grItem.productId
+            }
+          },
+          data: { stock: 50 }
+        });
       }
-    });
-
-    await prisma.inventoryLedger.create({
-      data: {
-        productId: pSach.id,
-        branchId: branchGV.id,
-        batchId: batch2.id,
-        movementType: "PURCHASE_RECEIPT",
-        qtyChange: 200,
-        balanceAfter: 200,
-        sourceDocId: gr2.id
-      }
-    });
-
-    await prisma.branchProduct.update({
-      where: {
-        branchId_productId: {
-          branchId: branchGV.id,
-          productId: pSach.id
-        }
-      },
-      data: { stock: 200 }
-    });
+    }
   }
 
   // 8. Create Admin and Store Manager Users
@@ -1091,6 +1255,64 @@ async function main() {
       password: auditorHash,
       role: "AUDITOR",
       phone: null,
+    },
+  });
+
+  const sellerEmail = "seller@demo.local";
+  const sellerHash = await bcrypt.hash("seller123", 10);
+  const sellerUser = await prisma.user.upsert({
+    where: { email: sellerEmail },
+    update: { role: "SELLER", name: "Nhà bán hàng Demo", password: sellerHash },
+    create: {
+      email: sellerEmail,
+      name: "Nhà bán hàng Demo",
+      password: sellerHash,
+      role: "SELLER",
+      phone: null,
+    },
+  });
+
+  await prisma.shop.upsert({
+    where: { ownerId: sellerUser.id },
+    update: {
+      shopName: "Tropical Gadgets Store",
+      businessAddress: "456 Nguyễn Huệ, Q.1, TP.HCM",
+      status: "APPROVED",
+    },
+    create: {
+      ownerId: sellerUser.id,
+      shopName: "Tropical Gadgets Store",
+      businessAddress: "456 Nguyễn Huệ, Q.1, TP.HCM",
+      status: "APPROVED",
+    },
+  });
+
+  // 9. Create Default Freeship Voucher
+  console.log("Seeding Default Voucher...");
+  await prisma.voucher.upsert({
+    where: { code: "FREESHIP299" },
+    update: {
+      discount_type: "FIXED_AMOUNT",
+      discount_value: 30000,
+      min_order_amount: 299000,
+      usage_limit: 999999,
+      per_user_limit: 999999,
+      start_date: new Date("2020-01-01T00:00:00.000Z"),
+      end_date: new Date("2035-12-31T23:59:59.000Z"),
+      status: "ACTIVE",
+      is_system_default: true,
+    },
+    create: {
+      code: "FREESHIP299",
+      discount_type: "FIXED_AMOUNT",
+      discount_value: 30000,
+      min_order_amount: 299000,
+      usage_limit: 999999,
+      per_user_limit: 999999,
+      start_date: new Date("2020-01-01T00:00:00.000Z"),
+      end_date: new Date("2035-12-31T23:59:59.000Z"),
+      status: "ACTIVE",
+      is_system_default: true,
     },
   });
 

@@ -858,4 +858,222 @@ router.delete("/categories/:id", async (req, res) => {
   }
 });
 
+// Admin: List deliveries
+const deliveriesListQuery = paginationQuery.extend({
+  status: z.string().optional(),
+  q: z.string().optional(),
+});
+
+router.get("/deliveries", async (req, res) => {
+  const parsed = deliveriesListQuery.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Query không hợp lệ", details: parsed.error.flatten() });
+    return;
+  }
+  const { page, limit, status, q } = parsed.data;
+  const skip = (page - 1) * limit;
+
+  const where: Prisma.DeliveryOrderWhereInput = {};
+  if (status) where.status = status;
+  const term = q?.trim();
+  if (term) {
+    where.OR = [
+      { orderId: { contains: term } },
+      { tracking_number: { contains: term } },
+      { shipping_provider: { contains: term } },
+      { order: { user: { name: { contains: term } } } },
+      { order: { user: { phone: { contains: term } } } },
+    ];
+  }
+
+  try {
+    const [items, total] = await Promise.all([
+      prisma.deliveryOrder.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+        include: {
+          order: {
+            include: {
+              user: { select: { id: true, name: true, phone: true } },
+            },
+          },
+        },
+      }),
+      prisma.deliveryOrder.count({ where }),
+    ]);
+
+    res.json({
+      items,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Failed to fetch deliveries" });
+  }
+});
+
+// Admin: Update delivery status
+const deliveryStatusPatch = z.object({
+  status: z.string(),
+});
+
+router.patch("/deliveries/:id/status", async (req, res) => {
+  const { id } = req.params;
+  const parsed = deliveryStatusPatch.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Validation", details: parsed.error.flatten() });
+    return;
+  }
+  const { status } = parsed.data;
+
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      const doRow = await tx.deliveryOrder.findUnique({
+        where: { id },
+        include: {
+          order: {
+            include: {
+              items: true,
+            },
+          },
+        },
+      });
+
+      if (!doRow) {
+        throw new Error("Không tìm thấy phiếu giao hàng");
+      }
+
+      const order = doRow.order;
+      const orderBranchId = order.branchId;
+
+      const updateData: any = { status };
+      if (status === "DELIVERED") {
+        updateData.actual_delivery_date = new Date();
+      }
+
+      const updated = await tx.deliveryOrder.update({
+        where: { id },
+        data: updateData,
+      });
+
+      if (status === "DELIVERED") {
+        await tx.order.update({
+          where: { id: order.id },
+          data: { status: "completed" },
+        });
+      }
+
+      return updated;
+    });
+
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Failed to update delivery status" });
+  }
+});
+
+// =====================================================
+// ADMIN — SHOP MANAGEMENT (Multi-Vendor)
+// =====================================================
+
+/** GET /api/admin/shops — Danh sách gian hàng (phân trang, filter theo status) */
+router.get("/shops", async (req, res) => {
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
+  const status = req.query.status as string | undefined;
+  const q = req.query.q as string | undefined;
+  const skip = (page - 1) * limit;
+
+  const where: any = {};
+  if (status) where.status = status;
+  if (q) {
+    where.OR = [
+      { shopName: { contains: q } },
+      { owner: { email: { contains: q } } },
+      { owner: { name: { contains: q } } },
+    ];
+  }
+
+  try {
+    const [items, total] = await Promise.all([
+      prisma.shop.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+        include: { owner: { select: { id: true, email: true, name: true, phone: true } } },
+      }),
+      prisma.shop.count({ where }),
+    ]);
+
+    res.json({
+      items,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Failed to fetch shops" });
+  }
+});
+
+/** PATCH /api/admin/shops/:id/approve — Duyệt gian hàng */
+router.patch("/shops/:id/approve", async (req, res) => {
+  const shopId = req.params.id as string;
+
+  try {
+    const shop = await prisma.shop.findUnique({ where: { id: shopId } });
+    if (!shop) {
+      res.status(404).json({ error: "Không tìm thấy gian hàng" });
+      return;
+    }
+    if (shop.status === "APPROVED") {
+      res.status(400).json({ error: "Gian hàng đã được duyệt trước đó" });
+      return;
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      const updatedShop = await tx.shop.update({
+        where: { id: shopId },
+        data: { status: "APPROVED", rejectReason: null },
+        include: { owner: { select: { id: true, email: true, name: true, phone: true } } },
+      });
+
+      await tx.user.update({
+        where: { id: shop.ownerId },
+        data: { role: "SELLER" },
+      });
+
+      return updatedShop;
+    });
+
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Failed to approve shop" });
+  }
+});
+
+/** PATCH /api/admin/shops/:id/reject — Từ chối gian hàng */
+router.patch("/shops/:id/reject", async (req, res) => {
+  const shopId = req.params.id as string;
+  const { reason } = req.body as { reason?: string };
+
+  try {
+    const shop = await prisma.shop.findUnique({ where: { id: shopId } });
+    if (!shop) {
+      res.status(404).json({ error: "Không tìm thấy gian hàng" });
+      return;
+    }
+
+    const updatedShop = await prisma.shop.update({
+      where: { id: shopId },
+      data: { status: "REJECTED", rejectReason: reason || null },
+      include: { owner: { select: { id: true, email: true, name: true, phone: true } } },
+    });
+
+    res.json(updatedShop);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Failed to reject shop" });
+  }
+});
+
 export default router;

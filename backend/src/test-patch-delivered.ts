@@ -42,20 +42,16 @@ async function main() {
 
         if (orderBranchId) {
           for (const item of order.items) {
-            const inv = await tx.inventory.findUnique({
+            const inv = await tx.branchProduct.findUnique({
               where: { branchId_productId: { branchId: orderBranchId, productId: item.productId } },
             });
             if (inv) {
-              const newPhysical = Math.max(0, inv.physical_stock - item.quantity);
-              const newReserved = Math.max(0, inv.reserved_stock - item.quantity);
-              const newAvailable = newPhysical - newReserved;
+              const newStock = Math.max(0, inv.stock - item.quantity);
 
-              await tx.inventory.update({
+              await tx.branchProduct.update({
                 where: { id: inv.id },
                 data: {
-                  physical_stock: newPhysical,
-                  reserved_stock: newReserved,
-                  available_stock: newAvailable,
+                  stock: newStock,
                 },
               });
             }

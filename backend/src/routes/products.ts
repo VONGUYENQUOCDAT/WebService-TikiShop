@@ -6,7 +6,7 @@ const router = Router();
 
 const listQuery = z.object({
   page: z.coerce.number().min(1).default(1),
-  limit: z.coerce.number().min(1).max(48).default(20),
+  limit: z.coerce.number().min(1).max(200).default(20),
   category: z.string().optional(),
   q: z.string().optional(),
   sort: z.enum(["newest", "price_asc", "price_desc", "bestseller"]).default("bestseller"),

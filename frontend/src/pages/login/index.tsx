@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { api } from "@/shared/api/client";
+import type { UserRole } from "@/shared/api/types";
 import { validateLoginFields } from "@/shared/lib/validators";
 import { useAuthStore } from "@/store/authStore";
 import styles from "@/shared/styles/auth-page.module.css";
 
 function postLoginPath(
-  role: "USER" | "ADMIN",
+  role: UserRole,
   target: string
 ): string {
   if (role === "ADMIN") {

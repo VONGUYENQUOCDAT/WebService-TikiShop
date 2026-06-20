@@ -15,6 +15,12 @@ import searchRoutes from "./routes/search.js";
 import adminRoutes from "./routes/admin.js";
 import procurementRoutes from "./routes/procurement.js";
 import inventoryRoutes from "./routes/inventory.js";
+import checkoutRoutes from "./routes/checkout.js";
+import returnsRoutes from "./routes/returns.js";
+import vouchersRoutes from "./routes/vouchers.js";
+import sellerRoutes from "./routes/seller.js";
+import reviewRoutes from "./controllers/reviewController.js";
+import adminReviewRoutes from "./controllers/adminReviewController.js";
 
 
 const app = express();
@@ -34,6 +40,32 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true, service: "tiki-clone-api", time: new Date().toISOString() });
 });
 
+/**
+ * @openapi
+ * /api/event-config:
+ *   get:
+ *     tags: [System]
+ *     summary: Lấy cấu hình sự kiện đếm ngược cho Modal Trang chủ
+ *     responses:
+ *       200:
+ *         description: Trả về trạng thái hoạt động và thời gian đếm ngược
+ */
+app.get("/api/event-config", (_req, res) => {
+  const targetDate = new Date();
+  // Tính chính xác 3 ngày, 14 giờ, 8 phút kể từ thời điểm hiện tại
+  targetDate.setDate(targetDate.getDate() + 3);
+  targetDate.setHours(targetDate.getHours() + 14);
+  targetDate.setMinutes(targetDate.getMinutes() + 8);
+  
+  res.json({
+    active: true,
+    eventName: "EXCLUSIVE ACCESS",
+    targetDate: targetDate.toISOString(),
+    description: "Tropical Tech Island VIP Flash Sale & Secret Portal Access"
+  });
+});
+
+
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, { customSiteTitle: "TIKI Clone API" }));
 app.get("/openapi.json", (_req, res) => res.json(swaggerSpec));
 
@@ -47,6 +79,12 @@ app.use("/api/search", searchRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/procurement", procurementRoutes);
 app.use("/api/inventory", inventoryRoutes);
+app.use("/api/checkout", checkoutRoutes);
+app.use("/api/returns", returnsRoutes);
+app.use("/api/vouchers", vouchersRoutes);
+app.use("/api/seller", sellerRoutes);
+app.use("/api/reviews", reviewRoutes);
+app.use("/api/admin/reviews", adminReviewRoutes);
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Not found" });

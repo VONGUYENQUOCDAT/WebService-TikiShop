@@ -22,6 +22,12 @@ const AdminOrderDetail = lazy(() => import("@/pages/admin/AdminOrderDetail"));
 const AdminUsers = lazy(() => import("@/pages/admin/AdminUsers"));
 const AdminProducts = lazy(() => import("@/pages/admin/AdminProducts"));
 const AdminCategories = lazy(() => import("@/pages/admin/AdminCategories"));
+const AdminShops = lazy(() => import("@/pages/admin/AdminShops"));
+const SellerRegister = lazy(() => import("@/pages/seller"));
+const AdminDeliveries = lazy(() => import("@/pages/admin/AdminDeliveries"));
+const AdminReturns = lazy(() => import("@/pages/admin/AdminReturns"));
+const AdminReviews = lazy(() => import("@/pages/admin/AdminReviews"));
+const AdminVouchers = lazy(() => import("@/pages/admin/Vouchers"));
 
 // ERP Imports
 const AdminSuppliers = lazy(() => import("@/pages/admin/Suppliers"));
@@ -52,6 +58,11 @@ function App() {
             <Route path="san-pham" element={<AdminProducts />} />
             <Route path="danh-muc" element={<AdminCategories />} />
             <Route path="nguoi-dung" element={<AdminUsers />} />
+            <Route path="gian-hang" element={<AdminShops />} />
+            <Route path="vouchers" element={<AdminVouchers />} />
+            <Route path="deliveries" element={<AdminDeliveries />} />
+            <Route path="returns" element={<AdminReturns />} />
+            <Route path="reviews" element={<AdminReviews />} />
             
             {/* ERP Routes */}
             <Route path="nha-cung-cap" element={<AdminSuppliers />} />
@@ -73,6 +84,7 @@ function App() {
           <Route path="dang-nhap" element={<LoginPage />} />
           <Route path="dang-ky" element={<RegisterPage />} />
           <Route path="gioi-thieu" element={<AboutPage />} />
+          <Route path="ban-hang" element={<SellerRegister />} />
 
           {/* Account dashboard — all account/order routes */}
           <Route path="tai-khoan" element={<AccountPage />} />

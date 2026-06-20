@@ -79,42 +79,31 @@ export default function Header() {
 
   return (
     <header className={styles.header}>
-      <div className={styles.preTop}>
-        <div className="container">
-          <div className={styles.preInner}>
-            <span className={styles.preItem}>
-              <IconMapPin className={styles.preIcon} />
-              Giao đến: <strong>Hà Nội</strong>
-              <span className={styles.preSep} aria-hidden>
-                |
-              </span>
-              <span className={styles.prePromo}>Freeship+ đơn từ 45k · Giao nhanh 2h</span>
-            </span>
-            <div className={styles.preLinks}>
-              <a href="#footer">Trở thành nhà bán hàng</a>
-              <span className={styles.dot} />
-              <a href="#footer">Tải ứng dụng</a>
-              <span className={styles.dot} />
-              <span>Chăm sóc khách hàng</span>
-            </div>
-          </div>
+      {/* Tầng 1: Top Banner (Khuyến mãi) */}
+      <div className={styles.topBanner}>
+        <div className={styles.headerContainer}>
+          Freeship đơn từ 45k, giảm nhiều hơn cùng FREESHIP XTRA
         </div>
       </div>
 
-      <div className={styles.main}>
-        <div className="container">
-          <div className={styles.row}>
-            <TikiLogo />
+      {/* Tầng 2: Main Header (Logo, Tìm kiếm, Actions & Location) */}
+      <div className={styles.mainHeader}>
+        <div className={styles.headerContainer}>
+          <div className={styles.mainRow}>
+            {/* Khối Trái: Logo & Slogan */}
+            <div className={styles.logoCol}>
+              <TikiLogo />
+            </div>
 
+            {/* Khối Giữa: Search Bar & Quick Links */}
             <div className={styles.searchCol}>
               <SearchBox />
-              <div className={styles.hot}>
-                <span className={styles.hotLabel}>Tìm nhiều:</span>
+              <div className={styles.quickLinks}>
                 {HOT_KEYS.map((k) => (
                   <button
                     key={k}
                     type="button"
-                    className={styles.hotBtn}
+                    className={styles.quickLinkBtn}
                     onClick={() => navigate(`/tim-kiem?q=${encodeURIComponent(k)}`)}
                   >
                     {k}
@@ -123,72 +112,117 @@ export default function Header() {
               </div>
             </div>
 
-            <div className={styles.actions}>
-              <Link to="/gio-hang" className={styles.cart}>
-                <span className={styles.cartIconWrap}>
-                  <IconCart />
-                  {cartCount > 0 && (
-                    <span className={styles.badge}>{cartCount > 99 ? "99+" : cartCount}</span>
-                  )}
-                </span>
-                <span className={styles.cartLabel}>Giỏ hàng</span>
-              </Link>
+            {/* Khối Phải: Nav Actions & Location */}
+            <div className={styles.rightCol}>
+              {/* Hàng trên: Các nút chức năng */}
+              <div className={styles.actions}>
+                <Link to="/" className={styles.actionItem} style={{ color: "#0b74de" }}>
+                  <svg className={styles.actionIcon} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    <polyline points="9 22 9 12 15 12 15 22" />
+                  </svg>
+                  <span>Trang chủ</span>
+                </Link>
 
-              <div className={styles.account}>
-                <IconUser className={styles.accountIcon} />
-                {user ? (
-                  <div className={styles.accountText}>
-                    <Link to="/tai-khoan" className={styles.accountName}>
-                      {user.name}
-                    </Link>
-                    <button type="button" className={styles.logout} onClick={() => logout()}>
-                      Thoát
-                    </button>
-                  </div>
-                ) : (
-                  <div className={styles.accountText}>
-                    <Link to="/dang-nhap" className={styles.loginLine}>
-                      Đăng nhập
-                    </Link>
-                    <Link to="/dang-ky" className={styles.subLine}>
-                      Đăng ký
-                    </Link>
-                  </div>
-                )}
+                <div className={styles.actionItem}>
+                  <svg className={styles.actionIcon} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#eab308" strokeWidth="2" fillOpacity="0.2">
+                    <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z" />
+                    <path d="M3 20h18" strokeWidth="3" />
+                  </svg>
+                  <span>Tiki VIP</span>
+                </div>
+
+                <div className={styles.actionItem}>
+                  <IconUser className={styles.actionIcon} />
+                  {user ? (
+                    <div className={styles.accountText}>
+                      <Link to="/tai-khoan" className={styles.accountName}>
+                        {user.name}
+                      </Link>
+                      <button type="button" className={styles.logout} onClick={() => logout()}>
+                        Thoát
+                      </button>
+                    </div>
+                  ) : (
+                    <div className={styles.accountText}>
+                      <div className={styles.authLinks}>
+                        <Link to="/dang-nhap" className={styles.loginBtn}>Đăng nhập</Link>
+                        <span className={styles.authSep}>/</span>
+                        <Link to="/dang-ky" className={styles.registerBtn}>Đăng ký</Link>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <Link to="/gio-hang" className={`${styles.actionItem} ${styles.cart}`}>
+                  <span className={styles.cartIconWrap}>
+                    <IconCart />
+                    {cartCount > 0 && (
+                      <span className={styles.badge}>{cartCount > 99 ? "99+" : cartCount}</span>
+                    )}
+                  </span>
+                  <span>Giỏ hàng</span>
+                </Link>
+              </div>
+
+              {/* Hàng dưới: Location */}
+              <div className={styles.location}>
+                <IconMapPin className={styles.locationIcon} />
+                <span className={styles.locationText}>
+                  Giao đến: <u>Q. 1, P. Bến Nghé, Hồ Chí Minh</u>
+                </span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <nav className={styles.nav}>
-        <div className="container">
-          <div className={styles.navInner}>
-            <Link to="/danh-muc" className={styles.navHighlight}>
-              <span className={styles.navIcon} aria-hidden>
-                ≡
-              </span>
-              Danh mục sản phẩm
-            </Link>
-            <div className={styles.navLinks}>
-              <Link to="/">Trang chủ</Link>
-              <Link to="/tim-kiem?q=a54">Điện thoại</Link>
-              <Link to="/tim-kiem?q=laptop">Laptop</Link>
-              <Link to="/danh-muc/dien-tu-dien-may">Điện tử</Link>
-              <Link to="/tai-khoan">Tài khoản</Link>
-              <Link to="/gioi-thieu">Giới thiệu</Link>
-              {isAdmin(user) && (
-                <Link to="/admin" className={styles.navAdmin}>
-                  Quản trị
-                </Link>
-              )}
-              <a href="/api-docs" target="_blank" rel="noreferrer" className={styles.navMuted}>
-                API
-              </a>
+      {/* Tầng 3: Thanh Cam kết (Commitment Bar) */}
+      <div className={styles.commitmentBar}>
+        <div className={`${styles.headerContainer} ${styles.commitmentContainer}`}>
+          <div className={styles.commitmentLeft}>
+            <span className={styles.commitmentTitle}>Cam kết</span>
+            <div className={styles.commitmentItems}>
+              <div className={styles.commitmentItem}>
+                <svg className={styles.checkIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span>100% hàng thật</span>
+              </div>
+              <div className={styles.commitmentItem}>
+                <svg className={styles.checkIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span>Freeship mọi đơn</span>
+              </div>
+              <div className={styles.commitmentItem}>
+                <svg className={styles.checkIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span>30 ngày đổi trả</span>
+              </div>
+              <div className={styles.commitmentItem}>
+                <svg className={styles.checkIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span>Hoàn tiền 111% nếu hàng giả</span>
+              </div>
             </div>
           </div>
+
+          {/* Dev Utilities (Admin, API Docs) */}
+          <div className={styles.devLinks}>
+            {isAdmin(user) && (
+              <Link to="/admin" className={styles.navAdmin}>
+                Quản trị
+              </Link>
+            )}
+            <a href="/api-docs" target="_blank" rel="noreferrer" className={styles.navMuted}>
+              API Docs
+            </a>
+          </div>
         </div>
-      </nav>
+      </div>
     </header>
   );
 }

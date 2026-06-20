@@ -1,0 +1,332 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  perspective: 1000px;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Modal Box - Azure glowing lines & borders */
+.modal {
+  position: relative;
+  background: linear-gradient(145deg, #0b1329 0%, #080b18 100%);
+  width: 90%;
+  max-width: 520px;
+  border-radius: var(--radius-xl);
+  padding: 40px 32px 36px;
+  box-shadow:
+    0 0 40px rgba(0, 210, 255, 0.25),
+    inset 0 0 24px rgba(0, 210, 255, 0.15);
+  border: 2px solid #00d2ff;
+  z-index: 10;
+  animation: modalScaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes modalScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.85) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Tiki Torches on Left & Right Borders */
+.torch {
+  position: absolute;
+  bottom: 0;
+  width: 14px;
+  height: 70%;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.torchLeft {
+  left: -8px;
+}
+
+.torchRight {
+  right: -8px;
+}
+
+.torchBody {
+  width: 100%;
+  flex: 1;
+  background: linear-gradient(90deg, #b45309 0%, #78350f 100%);
+  border: 1px solid #d97706;
+  border-radius: 4px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+/* Flickering Blue Digital Flames */
+.digitalFlame {
+  width: 28px;
+  height: 38px;
+  position: absolute;
+  top: -34px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: blueFlameFlicker 1s ease-in-out infinite alternate;
+}
+
+.flameCore {
+  width: 12px;
+  height: 24px;
+  background: linear-gradient(180deg, #ffffff 0%, #00d2ff 60%, #003daa 100%);
+  border-radius: 50% 50% 20% 20%;
+  margin: 8px auto 0;
+  box-shadow: 0 0 10px #00d2ff;
+}
+
+.flameGlow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(0, 210, 255, 0.4) 0%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(2px);
+}
+
+@keyframes blueFlameFlicker {
+  0% {
+    transform: translateX(-50%) scale(1) rotate(-3deg);
+    filter: drop-shadow(0 0 4px #00d2ff);
+  }
+  50% {
+    transform: translateX(-50%) scale(1.15) rotate(4deg);
+    filter: drop-shadow(0 0 10px #00d2ff);
+  }
+  100% {
+    transform: translateX(-50%) scale(0.95) rotate(-2deg);
+    filter: drop-shadow(0 0 6px #00d2ff);
+  }
+}
+
+/* Pulsing animated close button */
+.closeBtn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    color 0.25s,
+    transform 0.25s,
+    background-color 0.25s,
+    border-color 0.25s;
+  animation: closePulse 2s infinite alternate;
+}
+
+.closeBtn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+  transform: rotate(90deg) scale(1.05);
+  animation-play-state: paused;
+}
+
+@keyframes closePulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.1);
+  }
+  100% {
+    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+  }
+}
+
+/* Modal Content & Glow Line */
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.glowLine {
+  width: 80px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #00d2ff, transparent);
+  margin-bottom: 18px;
+}
+
+.badge {
+  font-size: 10px;
+  font-weight: 800;
+  color: #ff7a00;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 1px;
+  margin: 0 0 24px;
+}
+
+/* Countdown clock with tropical digital font style */
+.countdown {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(0, 210, 255, 0.2);
+  padding: 16px 20px;
+  border-radius: var(--radius-lg);
+  margin-bottom: 24px;
+  width: 100%;
+}
+
+.timeBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 54px;
+}
+
+.timeVal {
+  font-family: "Courier New", Courier, monospace;
+  font-size: clamp(20px, 6vw, 26px);
+  font-weight: 900;
+  color: #00d2ff;
+  text-shadow: 0 0 8px rgba(0, 210, 255, 0.7);
+  letter-spacing: 1px;
+}
+
+.timeUnit {
+  font-size: 9px;
+  font-weight: 700;
+  color: #64748b;
+  margin-top: 4px;
+  letter-spacing: 0.5px;
+}
+
+.divider {
+  font-family: monospace;
+  font-size: 20px;
+  font-weight: 900;
+  color: rgba(0, 210, 255, 0.6);
+  padding-bottom: 14px;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.desc {
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.6;
+  margin: 0 0 28px;
+  max-width: 38ch;
+}
+
+.actionBtn {
+  background: linear-gradient(135deg, #00d2ff 0%, #00a8ff 100%);
+  color: #0b1329;
+  border: none;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 14px 32px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+  box-shadow: 0 4px 18px rgba(0, 210, 255, 0.35);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.actionBtn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 6px 24px rgba(0, 210, 255, 0.55);
+}
+
+.actionBtn:active {
+  transform: translateY(0);
+}
+
+/* Particle streams (AR effect) */
+.particlesWrap {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.particle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  background: var(--color);
+  opacity: 0;
+  box-shadow: 0 0 8px var(--color);
+  animation: particleStream linear infinite;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes particleStream {
+  0% {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.8;
+  }
+  85% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.2);
+    opacity: 0;
+  }
+}
+
+/* Mobile responsive fixes */
+@media (max-width: 480px) {
+  .modal {
+    padding: 36px 20px 28px;
+  }
+  .torch {
+    height: 55%;
+  }
+  .countdown {
+    gap: 8px;
+    padding: 12px 8px;
+  }
+  .timeBox {
+    min-width: 44px;
+  }
+  .timeVal {
+    font-size: 20px;
+  }
+}

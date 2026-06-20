@@ -1,117 +1,354 @@
 .heroWrap {
   background: linear-gradient(180deg, #fff 0%, #fafbff 55%, var(--tiki-bg) 100%);
-  padding: var(--page-y) 0 clamp(12px, 2vw, 20px);
+  padding: 0 0 clamp(12px, 2vw, 20px);
 }
 
-.heroBannerWrap {
-  min-width: 0;
-}
-
-.hero {
+.heroGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(200px, min(32vw, 300px));
-  gap: clamp(14px, 2.5vw, 24px);
+  grid-template-columns: minmax(0, 1fr) minmax(220px, min(28vw, 290px));
+  gap: 12px;
   align-items: stretch;
 }
 
-@media (max-width: 900px) {
-  .hero {
+@media (max-width: 992px) {
+  .heroGrid {
     grid-template-columns: 1fr;
   }
 }
 
-.heroBanner {
-  background:
-    radial-gradient(ellipse 120% 80% at 100% 0%, rgb(255 255 255 / 18%) 0%, transparent 55%),
-    linear-gradient(125deg, #ff6b35 0%, #ff424e 42%, #e11d48 100%);
-  color: #fff;
-  border-radius: var(--radius-lg);
-  padding: clamp(22px, 4vw, 36px) clamp(20px, 3.5vw, 36px) clamp(26px, 4vw, 40px);
-  box-shadow: var(--shadow-md);
+/* Slideshow Container */
+.slideshowContainer {
   position: relative;
+  height: clamp(280px, 32vw, 360px);
+  width: 100%;
+  border-radius: 8px;
   overflow: hidden;
-  min-height: min(220px, 28vw);
+  box-shadow: var(--shadow-sm);
+  background: #000;
+}
+
+/* Individual Slide */
+.slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(24px, 4vw, 48px);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform: scale(1.03);
+  overflow: hidden;
+}
+
+.slideActive {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+}
+
+/* Content Area */
+.slideContent {
+  position: relative;
+  z-index: 10;
+  max-width: 55%;
+  color: #fff;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  align-items: flex-start;
 }
 
-.heroBanner::after {
-  content: "";
-  position: absolute;
-  right: -40px;
-  top: -40px;
-  width: 180px;
-  height: 180px;
-  background: rgb(255 255 255 / 12%);
-  border-radius: 50%;
+.slideTag {
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+  animation: slideInDown 0.6s both;
 }
 
-.heroTag {
-  margin: 0 0 8px;
-  font-size: 13px;
-  font-weight: 500;
-  opacity: 0.95;
-  letter-spacing: 0.02em;
+.slideTitle {
+  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+  font-weight: 900;
+  line-height: 1.1;
+  margin: 0;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  animation: slideInLeft 0.8s 0.1s both;
 }
 
-.heroTitle {
-  margin: 0 0 8px;
-  font-size: clamp(1.45rem, 3.2vw + 0.6rem, 2.05rem);
+.slideSubtitle {
+  font-size: clamp(1.1rem, 2vw, 1.6rem);
   font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 1.15;
-  max-width: 18ch;
+  color: #ffd700;
+  margin: 6px 0 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  animation: slideInLeft 0.8s 0.2s both;
 }
 
-.heroDesc {
-  margin: 0 0 clamp(16px, 3vw, 24px);
-  font-size: clamp(13px, 1.1vw, 15px);
-  opacity: 0.95;
+.slideDesc {
+  font-size: clamp(13px, 1.2vw, 15px);
   line-height: 1.5;
-  max-width: 36ch;
+  margin: 0 0 clamp(16px, 3vw, 28px);
+  opacity: 0.92;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  animation: slideInLeft 0.8s 0.3s both;
 }
 
-.heroCtas {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  position: relative;
-  z-index: 1;
-}
-
-.btnPrimary {
+/* Pulsing Button */
+.btnPulse {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #fff;
-  color: var(--tiki-orange);
-  font-weight: 700;
+  background: linear-gradient(135deg, #ffc72c 0%, #ffd700 50%, #ffa500 100%);
+  color: #1e293b;
+  font-weight: 800;
   font-size: 14px;
-  padding: 10px 22px;
+  padding: 12px 28px;
   border-radius: var(--radius-pill);
-  box-shadow: 0 2px 8px rgb(0 0 0 / 12%);
+  box-shadow: 0 4px 14px rgba(255, 215, 0, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  animation:
+    slideInUp 0.8s 0.4s both,
+    btnPulseGlow 2s infinite alternate;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
-.btnPrimary:hover {
+
+.btnPulse:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
   filter: brightness(1.05);
 }
 
-.btnGhost {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgb(255 255 255 / 65%);
-  color: #fff;
-  font-weight: 500;
-  font-size: 14px;
-  padding: 10px 20px;
-  border-radius: var(--radius-pill);
-}
-.btnGhost:hover {
-  background: rgb(255 255 255 / 12%);
+@keyframes btnPulseGlow {
+  0% {
+    box-shadow: 0 4px 14px rgba(255, 215, 0, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 4px 22px rgba(255, 215, 0, 0.75);
+    transform: scale(1.03);
+  }
+  100% {
+    box-shadow: 0 4px 14px rgba(255, 215, 0, 0.4);
+    transform: scale(1);
+  }
 }
 
-.heroSide {
+/* Image Column */
+.slideImageWrap {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  top: 0;
+  width: 48%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 5;
+}
+
+.slideImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: imageFadeIn 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+.imageOverlayGlow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 70% 50%, rgba(26, 148, 255, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Animations for Slide Elements */
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes imageFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(1.1) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Fireflies (Particles) */
+.particlesContainer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.firefly {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 10%, rgba(255, 223, 0, 0.9) 60%, rgba(255, 165, 0, 0) 100%);
+  box-shadow:
+    0 0 6px rgba(255, 215, 0, 0.8),
+    0 0 12px rgba(255, 154, 26, 0.4);
+  opacity: 0;
+  animation: floatFirefly linear infinite;
+}
+
+@keyframes floatFirefly {
+  0% {
+    opacity: 0;
+    transform: translateY(0) translateX(0) scale(0.6);
+  }
+  20% {
+    opacity: 0.85;
+  }
+  80% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-80px) translateX(30px) scale(1.1);
+  }
+}
+
+/* Floating Tropical Leaves */
+.leavesContainer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.floatingLeaf {
+  position: absolute;
+  animation: leafFloat ease-in-out infinite alternate;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+@keyframes leafFloat {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(var(--scale, 1));
+  }
+  100% {
+    transform: translateY(-20px) rotate(15deg) scale(var(--scale, 1));
+  }
+}
+
+/* Slider Controls */
+.arrowLeft,
+.arrowRight {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 20;
+  transition:
+    background 0.2s,
+    transform 0.15s;
+}
+
+.arrowLeft:hover,
+.arrowRight:hover {
+  background: rgba(0, 0, 0, 0.5);
+  transform: translateY(-50%) scale(1.05);
+}
+
+.arrowLeft {
+  left: 16px;
+}
+.arrowRight {
+  right: 16px;
+}
+
+/* Dots Page Indicator */
+.dots {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 20;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  border: none;
+  padding: 0;
+  transition:
+    background 0.25s,
+    transform 0.2s;
+}
+
+.dotActive {
+  background: #ffd700;
+  transform: scale(1.25);
+  box-shadow: 0 0 8px #ffd700;
+}
+
+/* Side Banners Column */
+.sideBanners {
   display: flex;
   flex-direction: column;
   gap: clamp(10px, 1.5vw, 14px);
@@ -120,49 +357,96 @@
 .miniCard {
   flex: 1;
   background: #fff;
-  border-radius: var(--radius-lg);
-  padding: clamp(12px, 2vw, 16px) clamp(14px, 2.2vw, 18px);
+  border-radius: var(--radius-xl);
+  padding: 22px 20px;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border);
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  color: var(--text);
+  justify-content: space-between;
+  align-items: center;
+  overflow: hidden;
+  position: relative;
   transition:
-    box-shadow 0.2s,
-    transform 0.15s;
+    box-shadow 0.25s ease,
+    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
 .miniCard:hover {
   box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
+  transform: translateY(-3px);
+  border-color: rgba(26, 148, 255, 0.2);
 }
 
-.miniCard strong {
-  font-size: 15px;
-  font-weight: 700;
+.miniCard1 {
+  background: linear-gradient(135deg, #ffffff 0%, #e0f2fe 100%);
 }
 
-.miniCard span:last-child {
+.miniCard2 {
+  background: linear-gradient(135deg, #ffffff 0%, #fef3c7 100%);
+}
+
+.miniCardContent {
+  z-index: 2;
+  position: relative;
+}
+
+.miniCardContent h4 {
+  font-size: 16px;
+  font-weight: 800;
+  margin: 6px 0 4px;
+  color: #1e293b;
+}
+
+.miniCardContent p {
   font-size: 12px;
-  color: var(--muted);
+  color: #64748b;
+  margin: 0 0 10px;
+  max-width: 20ch;
+  line-height: 1.4;
+}
+
+.miniLink {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--tiki-blue);
+}
+.miniCard2 .miniLink {
+  color: #d97706;
+}
+
+.miniLink:hover {
+  text-decoration: underline;
 }
 
 .miniBadge {
-  align-self: flex-start;
-  background: var(--tiki-blue-soft);
-  color: var(--tiki-blue);
-  font-size: 11px;
-  font-weight: 700;
+  display: inline-block;
+  background: #0284c7;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
   padding: 2px 8px;
   border-radius: 4px;
 }
 
 .miniBadge2 {
-  align-self: flex-start;
-  background: #fff0f1;
-  color: var(--tiki-orange);
-  font-size: 11px;
-  font-weight: 700;
+  display: inline-block;
+  background: #d97706;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
   padding: 2px 8px;
   border-radius: 4px;
 }
+
+.miniDecorIcon {
+  font-size: 48px;
+  opacity: 0.85;
+  user-select: none;
+  z-index: 1;
+  transition: transform 0.3s ease;
+}
+
+.miniCard:hover .miniDecorIcon {
+  transform: scale(1.15) rotate(8deg);
+}
+

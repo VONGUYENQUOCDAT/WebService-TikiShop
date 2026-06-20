@@ -1,0 +1,247 @@
+.page {
+  padding: var(--page-y) 0 var(--section-y);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.hero {
+  background: linear-gradient(135deg, #0b74de 0%, #1a94ff 100%);
+  color: #fff;
+  border-radius: var(--radius-xl);
+  padding: 40px 32px;
+  margin-bottom: 24px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.hero h1 {
+  font-size: 28px;
+  font-weight: 800;
+  margin: 0 0 12px;
+  letter-spacing: -0.02em;
+}
+
+.hero p {
+  font-size: 15px;
+  opacity: 0.9;
+  margin: 0;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.card {
+  background: var(--tiki-white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xs);
+  padding: 32px;
+  margin-bottom: 24px;
+}
+
+.cardTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 20px;
+  border-bottom: 2px solid var(--tiki-blue-soft);
+  padding-bottom: 12px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 600px) {
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+.label {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.required {
+  color: var(--tiki-orange);
+  margin-left: 2px;
+}
+
+.input {
+  padding: 10px 14px;
+  font-size: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--text);
+  background: #fff;
+  outline: none;
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
+}
+
+.input:focus {
+  border-color: var(--tiki-blue);
+  box-shadow: 0 0 0 3px rgba(26, 148, 255, 0.15);
+}
+
+.input::placeholder {
+  color: var(--muted);
+}
+
+.btnSubmit {
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--tiki-blue);
+  border: none;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: background var(--duration-fast), transform var(--duration-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.btnSubmit:hover:not(:disabled) {
+  background: #0b74de;
+  transform: translateY(-1px);
+}
+
+.btnSubmit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btnSubmit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.alert {
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  margin-bottom: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.alertDanger {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.alertInfo {
+  background: var(--tiki-blue-soft);
+  border: 1px solid #bfdbfe;
+  color: var(--tiki-blue);
+}
+
+.alertSuccess {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+.alertIcon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.alertTitle {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.successState, .pendingState {
+  text-align: center;
+  padding: 24px 0;
+}
+
+.stateIcon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.stateTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 12px;
+}
+
+.stateDesc {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0 0 24px;
+}
+
+.shopDetailsList {
+  display: inline-block;
+  text-align: left;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 24px;
+  margin-bottom: 24px;
+  max-width: 400px;
+  width: 100%;
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 13px;
+}
+
+.detailRow:last-child {
+  border-bottom: none;
+}
+
+.detailLabel {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.detailValue {
+  color: var(--text);
+}
+
+.authPrompt {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.authPrompt h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.authPrompt p {
+  color: var(--text-secondary);
+  margin: 0 0 20px;
+}

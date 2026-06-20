@@ -9,8 +9,16 @@ router.use(authRequired);
 const checkoutSchema = z.object({
   address: z.string().min(5),
   phone: z.string().min(8),
-  /** Nếu gửi: chỉ các dòng giỏ này được đưa vào đơn và xóa khỏi giỏ; các dòng khác giữ lại. Bỏ qua = toàn bộ giỏ (tương thích cũ). */
   cartItemIds: z.array(z.string()).min(1).max(200).optional(),
+  provinceId: z.string().optional(),
+  provinceName: z.string().optional(),
+  districtId: z.string().optional(),
+  districtName: z.string().optional(),
+  wardId: z.string().optional(),
+  wardName: z.string().optional(),
+  streetAddress: z.string().optional(),
+  addressType: z.string().optional(),
+  voucherCode: z.string().optional(),
 });
 
 /**
@@ -68,7 +76,21 @@ router.post("/checkout", async (req, res) => {
     res.status(400).json({ error: "Validation", details: parsed.error.flatten() });
     return;
   }
-  const { address, phone, cartItemIds } = parsed.data;
+  const { 
+    address, 
+    phone, 
+    cartItemIds,
+    provinceId,
+    provinceName,
+    districtId,
+    districtName,
+    wardId,
+    wardName,
+    streetAddress,
+    addressType,
+    voucherCode
+  } = parsed.data;
+
   const allCart = await prisma.cartItem.findMany({
     where: { userId: req.user!.userId },
     include: { product: true },
@@ -92,36 +114,248 @@ router.post("/checkout", async (req, res) => {
     }
   }
 
-  const total = cartItems.reduce((s, i) => s + i.product.price * i.quantity, 0);
+  let shippingFee = 0;
+  if (provinceId) {
+    const codeNum = parseInt(provinceId, 10);
+    shippingFee = 30000; // Phí mặc định
+    if (codeNum === 79 || codeNum === 1) {
+      shippingFee = 15000;
+    } else if ([48, 31, 75, 60].includes(codeNum)) {
+      shippingFee = 25000;
+    } else if (codeNum >= 80) {
+      shippingFee = 40000;
+    } else if (codeNum > 1 && codeNum < 30) {
+      shippingFee = 35000;
+    }
 
-  const order = await prisma.$transaction(async (tx) => {
-    const o = await tx.order.create({
-      data: {
+    const totalQty = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+    const additionalFee = Math.max(0, (totalQty - 1) * 5000);
+    shippingFee += additionalFee;
+  }
+
+  const subtotal = cartItems.reduce((s, i) => s + i.product.price * i.quantity, 0);
+
+  // Voucher validation and discount calculation
+  let discount = 0;
+  let finalVoucherCode: string | null = null;
+  let voucherId: string | null = null;
+
+  if (voucherCode && voucherCode.trim() !== "") {
+    const uppercaseCode = voucherCode.trim().toUpperCase();
+    if (uppercaseCode === "FREESHIP299") {
+      if (subtotal < 299000) {
+        res.status(400).json({ error: "Đơn hàng chưa đủ điều kiện áp dụng mã Freeship" });
+        return;
+      }
+    }
+
+    const voucher = await prisma.voucher.findUnique({
+      where: { code: uppercaseCode },
+    });
+
+    if (!voucher) {
+      res.status(400).json({ error: "Mã giảm giá không tồn tại" });
+      return;
+    }
+
+    const now = new Date();
+    const isExpired = now > new Date(voucher.end_date) || now < new Date(voucher.start_date);
+    if (voucher.status !== "ACTIVE" || isExpired) {
+      res.status(400).json({ error: "Mã giảm giá đã hết hạn" });
+      return;
+    }
+
+    if (voucher.used_count >= voucher.usage_limit) {
+      res.status(400).json({ error: "Mã giảm giá đã hết lượt sử dụng" });
+      return;
+    }
+
+    if (subtotal < voucher.min_order_amount) {
+      res.status(400).json({ error: "Đơn hàng chưa đạt giá trị tối thiểu" });
+      return;
+    }
+
+    const usedCountForUser = await prisma.userVoucherHistory.count({
+      where: {
         userId: req.user!.userId,
-        total,
-        address,
-        phone,
-        status: "pending",
-        items: {
-          create: cartItems.map((ci) => ({
-            productId: ci.productId,
-            quantity: ci.quantity,
-            price: ci.product.price,
-          })),
-        },
+        voucherId: voucher.id,
       },
     });
-    await tx.cartItem.deleteMany({
-      where: { userId: req.user!.userId, id: { in: cartItems.map((c) => c.id) } },
-    });
-    return o;
-  });
 
-  const full = await prisma.order.findUnique({
-    where: { id: order.id },
-    include: { items: { include: { product: true } } },
-  });
-  res.status(201).json(full);
+    if (usedCountForUser >= voucher.per_user_limit) {
+      res.status(400).json({ error: "Bạn đã hết lượt sử dụng mã này" });
+      return;
+    }
+
+    if (uppercaseCode === "FREESHIP299" || voucher.is_system_default) {
+      discount = Math.min(shippingFee, voucher.discount_value);
+    } else {
+      if (voucher.discount_type === "PERCENTAGE") {
+        discount = Math.floor((subtotal * voucher.discount_value) / 100);
+        if (voucher.max_discount_amount != null) {
+          discount = Math.min(discount, voucher.max_discount_amount);
+        }
+      } else if (voucher.discount_type === "FIXED_AMOUNT") {
+        discount = voucher.discount_value;
+      }
+    }
+
+    discount = Math.min(discount, subtotal + shippingFee);
+    finalVoucherCode = voucher.code;
+    voucherId = voucher.id;
+  }
+
+  const total = subtotal + shippingFee - discount;
+
+  try {
+    const order = await prisma.$transaction(async (tx) => {
+      // 1. Kiểm tra tồn kho theo lô (FEFO) và chuẩn bị các giao dịch trừ kho
+      const deductions: Array<{
+        productId: string;
+        qtyFromThisBatch: number;
+        batch: any;
+      }> = [];
+
+      let selectedBranchId: string | null = null;
+
+      for (const item of cartItems) {
+        let qtyNeeded = item.quantity;
+        const now = new Date();
+        const batches = await tx.inventoryBatch.findMany({
+          where: {
+            productId: item.productId,
+            remainingQty: { gt: 0 },
+            expiryDate: { gt: now },
+          },
+          orderBy: { expiryDate: "asc" }, // Sắp xếp theo hạn sử dụng tăng dần (FEFO)
+        });
+
+        const totalStock = batches.reduce((sum, b) => sum + b.remainingQty, 0);
+        if (totalStock < qtyNeeded) {
+          throw new Error(`Sản phẩm "${item.product.name}" đã hết hàng hoặc không đủ tồn kho (còn lại: ${totalStock}).`);
+        }
+
+        for (const batch of batches) {
+          if (qtyNeeded <= 0) break;
+          const qtyFromThisBatch = Math.min(batch.remainingQty, qtyNeeded);
+          deductions.push({
+            productId: item.productId,
+            qtyFromThisBatch,
+            batch,
+          });
+          qtyNeeded -= qtyFromThisBatch;
+          if (!selectedBranchId) {
+            selectedBranchId = batch.branchId;
+          }
+        }
+      }
+
+      // 2. Tạo đơn hàng
+      const o = await tx.order.create({
+        data: {
+          userId: req.user!.userId,
+          branchId: selectedBranchId,
+          total,
+          address,
+          phone,
+          status: "pending",
+          provinceId,
+          provinceName,
+          districtId,
+          districtName,
+          wardId,
+          wardName,
+          streetAddress,
+          addressType,
+          shippingFee,
+          discount,
+          voucherCode: finalVoucherCode,
+          items: {
+            create: cartItems.map((ci) => ({
+              productId: ci.productId,
+              quantity: ci.quantity,
+              price: ci.product.price,
+            })),
+          },
+        },
+      });
+
+      // 2b. Tạo phiếu giao hàng (DeliveryOrder) mặc định cho đơn hàng mới
+      await tx.deliveryOrder.create({
+        data: {
+          orderId: o.id,
+          shipping_provider: "TikiFast",
+          tracking_number: `TK-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
+          shipping_fee: shippingFee,
+          status: "PENDING",
+          estimated_delivery_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 ngày sau
+        },
+      });
+
+      // 3. Thực hiện trừ kho, cập nhật BranchProduct và ghi Ledger (SALE)
+      for (const d of deductions) {
+        // Giảm số lượng còn lại trong lô hàng
+        await tx.inventoryBatch.update({
+          where: { id: d.batch.id },
+          data: { remainingQty: { decrement: d.qtyFromThisBatch } },
+        });
+
+        // Giảm số lượng tồn kho trên BranchProduct
+        const bp = await tx.branchProduct.update({
+          where: {
+            branchId_productId: {
+              branchId: d.batch.branchId,
+              productId: d.productId,
+            },
+          },
+          data: { stock: { decrement: d.qtyFromThisBatch } },
+        });
+
+        // Ghi sổ cái hoạt động xuất kho do bán hàng (SALE)
+        await tx.inventoryLedger.create({
+          data: {
+            productId: d.productId,
+            branchId: d.batch.branchId,
+            batchId: d.batch.id,
+            movementType: "SALE",
+            qtyChange: -d.qtyFromThisBatch,
+            balanceAfter: bp.stock,
+            sourceDocId: o.id,
+          },
+        });
+      }
+
+      // 4. Xóa cartItems đã đặt hàng
+      await tx.cartItem.deleteMany({
+        where: { userId: req.user!.userId, id: { in: cartItems.map((c) => c.id) } },
+      });
+
+      // 5. Cập nhật voucher đã sử dụng
+      if (voucherId && finalVoucherCode) {
+        await tx.voucher.update({
+          where: { id: voucherId },
+          data: { used_count: { increment: 1 } },
+        });
+
+        await tx.userVoucherHistory.create({
+          data: {
+            userId: req.user!.userId,
+            voucherId: voucherId,
+          },
+        });
+      }
+
+      return o;
+    });
+
+    const full = await prisma.order.findUnique({
+      where: { id: order.id },
+      include: { items: { include: { product: true } } },
+    });
+    res.status(201).json(full);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message || "Đặt hàng thất bại do lỗi tồn kho." });
+  }
 });
 
 /**

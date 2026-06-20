@@ -83,3 +83,20 @@ export function optionalAuth(req: Request, _res: Response, next: NextFunction) {
   }
   next();
 }
+
+/** Chỉ SELLER hoặc ADMIN (kiểm tra theo DB). */
+export async function sellerRequired(req: Request, res: Response, next: NextFunction) {
+  if (!req.user) {
+    res.status(401).json({ error: "Unauthorized", message: "Cần đăng nhập" });
+    return;
+  }
+  const row = await prisma.user.findUnique({
+    where: { id: req.user.userId },
+    select: { role: true },
+  });
+  if (!row || (row.role !== "SELLER" && row.role !== "ADMIN")) {
+    res.status(403).json({ error: "Forbidden", message: "Bạn cần là Nhà bán hàng được duyệt" });
+    return;
+  }
+  next();
+}

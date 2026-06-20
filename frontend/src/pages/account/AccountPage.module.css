@@ -501,3 +501,413 @@
 .logoutBtn {
   color: var(--tiki-orange) !important;
 }
+
+/* ===== Modals (Review & Return) ===== */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: var(--surface-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeOverlay 0.2s var(--ease-out);
+}
+
+.reviewModal,
+.returnModal {
+  background: var(--tiki-white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  padding: 24px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: scaleModal 0.25s var(--ease-spring);
+  position: relative;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.modalHeader h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+.closeBtn {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.closeBtn:hover {
+  color: var(--text);
+}
+
+.modalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modalHint {
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--tiki-blue-soft);
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  line-height: 1.4;
+}
+
+/* Product brief inside review */
+.productBrief {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: #f8fafc;
+  padding: 10px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+}
+.productImg {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: var(--radius);
+}
+.productName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+/* Star selection */
+.ratingSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.ratingTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.starsContainer {
+  display: flex;
+  gap: 6px;
+}
+.star {
+  font-size: 2.2rem;
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: transform 0.1s, color 0.1s;
+}
+.star:hover {
+  transform: scale(1.15);
+}
+.starActive {
+  color: #ffc107;
+}
+.ratingLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--tiki-blue);
+}
+
+/* Text area & inputs */
+.commentSection,
+.reasonSection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.commentTitle,
+.reasonTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.textarea {
+  min-height: 80px;
+  resize: vertical;
+  padding: 10px;
+  font-size: 13px;
+}
+.charCount {
+  font-size: 11px;
+  color: var(--muted);
+  align-self: flex-end;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+/* Item list inside return */
+.itemsList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.itemRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.itemRow:hover {
+  border-color: var(--tiki-blue-soft);
+  background: #fafafa;
+}
+.itemRowActive {
+  border-color: var(--tiki-blue-soft);
+  background: #f0f9ff;
+}
+.checkboxContainer {
+  display: flex;
+  align-items: center;
+}
+.checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+.itemImg {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: var(--radius);
+}
+.itemMeta {
+  flex: 1;
+}
+.itemName {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+  line-height: 1.3;
+}
+.itemPrice {
+  font-size: 11px;
+  color: var(--tiki-orange);
+  font-weight: 600;
+}
+.itemMaxQty {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+/* Return Qty controls */
+.qtyControl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--tiki-white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2px;
+}
+.qtyBtn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: none;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  border-radius: var(--radius-sm);
+}
+.qtyBtn:hover:not(:disabled) {
+  background: var(--tiki-blue-soft);
+  color: var(--tiki-blue);
+}
+.qtyBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.qtyVal {
+  font-size: 13px;
+  font-weight: 700;
+  min-width: 16px;
+  text-align: center;
+}
+
+/* Refund summary */
+.refundSummary {
+  background: #fdf2f8;
+  border: 1px dashed #fbcfe8;
+  padding: 12px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.refundRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+.refundTotal {
+  color: #db2777;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* Reviews buttons in item list */
+.btnReview {
+  background: #fff;
+  border: 1px solid var(--tiki-blue);
+  color: var(--tiki-blue);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btnReview:hover {
+  background: var(--tiki-blue);
+  color: #fff;
+}
+.reviewedBadge {
+  font-size: 11px;
+  color: #16a34a;
+  background: #dcfce7;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+}
+
+/* detailLine updates */
+.detailLineTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+}
+.detailLineBottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-top: 4px;
+}
+
+/* Return Row */
+.returnRow {
+  margin: 12px 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.btnReturn {
+  padding: 8px 18px;
+  border-radius: var(--radius);
+  border: 1px solid var(--tiki-blue);
+  background: #fff;
+  color: var(--tiki-blue);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btnReturn:hover {
+  background: var(--tiki-blue-soft);
+}
+.returnHint {
+  font-size: 12px;
+  color: var(--muted);
+  max-width: 320px;
+}
+
+/* Return status banner */
+.returnBanner {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  margin: 12px 0 20px;
+}
+.returnBannerTitle {
+  font-weight: 700;
+  font-size: 14px;
+  color: #166534;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.returnStatusBadge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+  background: #dcfce7;
+  color: #15803d;
+}
+.returnStatusBadge[data-status="PENDING"] {
+  background: #fef3c7;
+  color: #d97706;
+}
+.returnStatusBadge[data-status="APPROVED"] {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+.returnStatusBadge[data-status="REJECTED"] {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.returnBannerBody {
+  font-size: 13px;
+  color: #374151;
+}
+.returnBannerBody p {
+  margin: 4px 0;
+}
+.returnItemsBrief {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+@keyframes fadeOverlay {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleModal {
+  from { opacity: 0; transform: scale(0.92) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}

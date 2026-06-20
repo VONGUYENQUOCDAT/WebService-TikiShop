@@ -24,7 +24,7 @@ export type Product = {
   category?: Category;
 };
 
-export type UserRole = "USER" | "ADMIN";
+export type UserRole = "USER" | "SELLER" | "ADMIN" | "AUDITOR" | "STORE_MANAGER";
 
 export type User = {
   id: string;
@@ -49,6 +49,17 @@ export type Order = {
   address: string;
   phone: string;
   createdAt: string;
+  provinceId?: string | null;
+  provinceName?: string | null;
+  districtId?: string | null;
+  districtName?: string | null;
+  wardId?: string | null;
+  wardName?: string | null;
+  streetAddress?: string | null;
+  addressType?: string | null;
+  shippingFee: number;
+  discount: number;
+  voucherCode?: string | null;
   items: Array<{
     id: string;
     quantity: number;
@@ -151,4 +162,49 @@ export type AdminCategoryRow = {
 
 export type AdminOrderDetail = Order & {
   user: { id: string; email: string; name: string; phone: string | null };
+};
+
+export type DeliveryStatus = "PENDING" | "PICKING_UP" | "DELIVERING" | "DELIVERED" | "FAILED";
+
+export type DeliveryOrder = {
+  id: string;
+  orderId: string;
+  shipping_provider: string;
+  tracking_number: string;
+  shipping_fee: number;
+  status: DeliveryStatus;
+  estimated_delivery_date: string | null;
+  actual_delivery_date: string | null;
+  createdAt: string;
+  order?: {
+    id: string;
+    total: number;
+    createdAt: string;
+    user?: {
+      name: string;
+      phone: string | null;
+    };
+  };
+};
+
+export type ShopStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+export type Shop = {
+  id: string;
+  ownerId: string;
+  shopName: string;
+  taxCode?: string | null;
+  idCard?: string | null;
+  businessAddress: string;
+  bankAccount?: string | null;
+  status: ShopStatus;
+  rejectReason?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  owner?: {
+    id: string;
+    email: string;
+    name: string;
+    phone: string | null;
+  };
 };

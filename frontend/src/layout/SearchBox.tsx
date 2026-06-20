@@ -24,7 +24,7 @@ export default function SearchBox({
 
   const cacheRef = useRef<Record<string, string[]>>({});
 
-  const debounceRef = useRef<number | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const requestIdRef = useRef(0);
 
@@ -171,20 +171,37 @@ export default function SearchBox({
   return (
     <div ref={wrapperRef} className={`${styles.searchBox} ${className}`}>
       <form onSubmit={handleSubmit} className={styles.form}>
-        <input
-          type="text"
-          value={query}
-          placeholder={placeholder}
-          autoComplete="off"
-          className={styles.input}
-          onChange={(e) => setQuery(e.target.value)}
-          onFocus={() => {
-            if (suggestions.length > 0) {
-              setShowSuggestions(true);
-            }
-          }}
-          onKeyDown={handleKeyDown}
-        />
+        <div className={styles.inputWrapper}>
+          <svg
+            className={styles.searchIcon}
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
+          </svg>
+          <input
+            type="text"
+            value={query}
+            placeholder={placeholder}
+            autoComplete="off"
+            className={styles.input}
+            onChange={(e) => setQuery(e.target.value)}
+            onFocus={() => {
+              if (suggestions.length > 0) {
+                setShowSuggestions(true);
+              }
+            }}
+            onKeyDown={handleKeyDown}
+          />
+        </div>
+
+        <span className={styles.divider} />
 
         <button type="submit" className={styles.button}>
           <span className={styles.buttonText}>Tìm kiếm</span>
