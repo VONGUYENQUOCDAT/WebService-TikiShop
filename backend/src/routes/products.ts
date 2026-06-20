@@ -109,7 +109,7 @@ router.get("/", async (req, res) => {
 router.get("/slug/:slug", async (req, res) => {
   const product = await prisma.product.findUnique({
     where: { slug: req.params.slug },
-    include: { category: true },
+    include: { category: true, shop: true },
   });
   if (!product) {
     res.status(404).json({ error: "Không tìm thấy sản phẩm" });
@@ -138,7 +138,7 @@ router.get("/slug/:slug", async (req, res) => {
 router.get("/:id", async (req, res) => {
   const product = await prisma.product.findUnique({
     where: { id: req.params.id },
-    include: { category: true },
+    include: { category: true, shop: true },
   });
   if (!product) {
     res.status(404).json({ error: "Không tìm thấy sản phẩm" });

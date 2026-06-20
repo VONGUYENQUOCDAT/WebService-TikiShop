@@ -53,6 +53,7 @@ CREATE TABLE `product` (
     `rating` DOUBLE NOT NULL DEFAULT 4.5,
     `reviewCount` INTEGER NOT NULL DEFAULT 0,
     `sold` INTEGER NOT NULL DEFAULT 0,
+    `stock_quantity` INTEGER NOT NULL DEFAULT 0,
     `badge` VARCHAR(191) NULL,
     `brand` VARCHAR(191) NULL,
     `tags` TEXT NULL,
@@ -125,7 +126,7 @@ INSERT INTO `category` (`id`, `name`, `slug`, `icon`) VALUES
 
 INSERT INTO `product` (
   `id`, `name`, `slug`, `description`, `price`, `listPrice`, `image`,
-  `rating`, `reviewCount`, `sold`, `badge`, `brand`, `tags`, `categoryId`
+  `rating`, `reviewCount`, `sold`, `badge`, `brand`, `tags`, `categoryId`, `stock_quantity`
 ) VALUES
   (
     'samsung-galaxy-a54-5g',
@@ -135,7 +136,7 @@ INSERT INTO `product` (
     7490000, 8990000,
     'https://picsum.photos/seed/samsung-galaxy-a54-5g/280/280',
     4.8, 1250, 3200, '-17%', 'Samsung', 'điện thoại,android,5g',
-    'dien-thoai-may-tinh-bang'
+    'dien-thoai-may-tinh-bang', 150
   ),
   (
     'iphone-15-128gb',
@@ -145,7 +146,7 @@ INSERT INTO `product` (
     19990000, 22990000,
     'https://picsum.photos/seed/iphone-15-128gb/280/280',
     4.9, 890, 1500, 'Giảm sốc', 'Apple', 'điện thoại,ios,iphone',
-    'dien-thoai-may-tinh-bang'
+    'dien-thoai-may-tinh-bang', 150
   ),
   (
     'xiaomi-redmi-note-13-pro',
@@ -155,7 +156,7 @@ INSERT INTO `product` (
     6690000, 7290000,
     'https://picsum.photos/seed/xiaomi-redmi-note-13-pro/280/280',
     4.7, 560, 2100, NULL, 'Xiaomi', 'điện thoại,android,redmi',
-    'dien-thoai-may-tinh-bang'
+    'dien-thoai-may-tinh-bang', 150
   ),
   (
     'laptop-asus-vivobook-15-oled',
@@ -165,7 +166,7 @@ INSERT INTO `product` (
     15990000, 17990000,
     'https://picsum.photos/seed/laptop-asus-vivobook-15-oled/280/280',
     4.6, 320, 890, 'Mới', 'ASUS', 'laptop,máy tính,oled',
-    'dien-tu-dien-may'
+    'dien-tu-dien-may', 150
   ),
   (
     'sony-wh-1000xm5',
@@ -175,7 +176,7 @@ INSERT INTO `product` (
     7490000, 8990000,
     'https://picsum.photos/seed/sony-wh-1000xm5/280/280',
     4.9, 2100, 5600, 'TikiNOW', 'Sony', 'tai nghe,bluetooth,chống ồn',
-    'dien-tu-dien-may'
+    'dien-tu-dien-may', 150
   ),
   (
     'smart-tv-samsung-55',
@@ -185,7 +186,7 @@ INSERT INTO `product` (
     11290000, 13990000,
     'https://picsum.photos/seed/smart-tv-samsung-55/280/280',
     4.5, 412, 780, '-19%', NULL, NULL,
-    'dien-tu-dien-may'
+    'dien-tu-dien-may', 150
   ),
   (
     'ao-thun-nam-co-tru-coolmate',
@@ -195,7 +196,7 @@ INSERT INTO `product` (
     199000, 299000,
     'https://picsum.photos/seed/ao-thun-nam-co-tru-coolmate/280/280',
     4.7, 890, 12000, NULL, NULL, NULL,
-    'thoi-trang-nam'
+    'thoi-trang-nam', 150
   ),
   (
     'quan-jean-nam-slim-fit',
@@ -205,7 +206,7 @@ INSERT INTO `product` (
     399000, 599000,
     'https://picsum.photos/seed/quan-jean-nam-slim-fit/280/280',
     4.4, 230, 3400, NULL, NULL, NULL,
-    'thoi-trang-nam'
+    'thoi-trang-nam', 150
   ),
   (
     'vay-lien-nu-cong-so',
@@ -215,7 +216,7 @@ INSERT INTO `product` (
     459000, 659000,
     'https://picsum.photos/seed/vay-lien-nu-cong-so/280/280',
     4.6, 156, 2100, 'Mới', NULL, NULL,
-    'thoi-trang-nu'
+    'thoi-trang-nu', 150
   ),
   (
     'tui-xach-nu-da-pu',
@@ -225,7 +226,7 @@ INSERT INTO `product` (
     329000, 499000,
     'https://picsum.photos/seed/tui-xach-nu-da-pu/280/280',
     4.5, 98, 890, NULL, NULL, NULL,
-    'thoi-trang-nu'
+    'thoi-trang-nu', 150
   ),
   (
     'noi-chien-khong-dau-philips',
@@ -235,7 +236,7 @@ INSERT INTO `product` (
     1990000, 2490000,
     'https://picsum.photos/seed/noi-chien-khong-dau-philips/280/280',
     4.8, 3400, 15000, 'Bán chạy', NULL, NULL,
-    'nha-cua-doi-song'
+    'nha-cua-doi-song', 150
   ),
   (
     'bo-chan-ga-cotton-amando',
@@ -245,7 +246,7 @@ INSERT INTO `product` (
     890000, 1190000,
     'https://picsum.photos/seed/bo-chan-ga-cotton-amando/280/280',
     4.6, 670, 4500, NULL, NULL, NULL,
-    'nha-cua-doi-song'
+    'nha-cua-doi-song', 150
   ),
   (
     'sach-dac-nhan-tam',
@@ -255,7 +256,7 @@ INSERT INTO `product` (
     79000, 120000,
     'https://picsum.photos/seed/sach-dac-nhan-tam/280/280',
     4.9, 12000, 80000, NULL, NULL, NULL,
-    'sach-vpp'
+    'sach-vpp', 150
   ),
   (
     'but-bi-thien-long-tl027',
@@ -265,7 +266,7 @@ INSERT INTO `product` (
     45000, NULL,
     'https://picsum.photos/seed/but-bi-thien-long-tl027/280/280',
     4.5, 560, 23000, NULL, NULL, NULL,
-    'sach-vpp'
+    'sach-vpp', 150
   ),
   (
     'serum-vitamin-c-the-ordinary',
@@ -275,7 +276,7 @@ INSERT INTO `product` (
     320000, 420000,
     'https://picsum.photos/seed/serum-vitamin-c-the-ordinary/280/280',
     4.7, 2100, 12000, '-24%', NULL, NULL,
-    'lam-dep-suc-khoe'
+    'lam-dep-suc-khoe', 150
   ),
   (
     'kem-chong-nang-la-roche-posay',
@@ -285,7 +286,7 @@ INSERT INTO `product` (
     395000, 495000,
     'https://picsum.photos/seed/kem-chong-nang-la-roche-posay/280/280',
     4.8, 5600, 18000, 'Hàng hiệu', NULL, NULL,
-    'lam-dep-suc-khoe'
+    'lam-dep-suc-khoe', 150
   ),
   (
     'giay-chay-bo-nike-revolution-6',
@@ -295,7 +296,7 @@ INSERT INTO `product` (
     1890000, 2290000,
     'https://picsum.photos/seed/giay-chay-bo-nike-revolution-6/280/280',
     4.6, 890, 5600, NULL, NULL, NULL,
-    'the-thao-da-ngoai'
+    'the-thao-da-ngoai', 150
   ),
   (
     'leu-cam-trai-4-nguoi',
@@ -305,7 +306,7 @@ INSERT INTO `product` (
     2490000, 2990000,
     'https://picsum.photos/seed/leu-cam-trai-4-nguoi/280/280',
     4.5, 230, 890, NULL, NULL, NULL,
-    'the-thao-da-ngoai'
+    'the-thao-da-ngoai', 150
   );
 
 -- -----------------------------------------------------------------------------

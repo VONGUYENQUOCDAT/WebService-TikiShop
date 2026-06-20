@@ -122,9 +122,10 @@ export const api = {
     request<import("./types").Order>(`/api/orders/${encodeURIComponent(id)}/cancel`, { method: "POST" }),
 
   checkout: (body: { 
-    address: string; 
+    address?: string; 
     phone: string; 
     cartItemIds?: string[];
+    addressId?: string;
     provinceId?: string;
     provinceName?: string;
     districtId?: string;
@@ -134,8 +135,9 @@ export const api = {
     streetAddress?: string;
     addressType?: string;
     voucherCode?: string;
+    paymentMethod?: "COD" | "ONLINE";
   }) =>
-    request<import("./types").Order>("/api/orders/checkout", {
+    request<import("./types").Order & { checkoutUrl?: string }>("/api/orders/checkout", {
       method: "POST",
       body: JSON.stringify(body),
     }),
@@ -498,5 +500,83 @@ export const api = {
     }),
 
   getReturns: () => request<any[]>("/api/returns"),
-};
 
+  // Address Book CRUD
+  addresses: () => request<import("./types").Address[]>("/api/user/addresses"),
+  createAddress: (body: Omit<import("./types").Address, "id" | "userId" | "createdAt">) =>
+    request<import("./types").Address>("/api/user/addresses", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  updateAddress: (id: string, body: Omit<import("./types").Address, "id" | "userId" | "createdAt">) =>
+    request<import("./types").Address>(`/api/user/addresses/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+  deleteAddress: (id: string) =>
+    request<void>(`/api/user/addresses/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  setDefaultAddress: (id: string) =>
+    request<import("./types").Address>(`/api/user/addresses/${encodeURIComponent(id)}/default`, {
+      method: "PATCH",
+    }),
+
+  // Wishlist
+  wishlist: () => request<import("./types").Product[]>("/api/wishlist"),
+  addWishlist: (productId: string) =>
+    request<any>("/api/wishlist", {
+      method: "POST",
+      body: JSON.stringify({ productId }),
+    }),
+  removeWishlist: (productId: string) =>
+    request<void>(`/api/wishlist/${encodeURIComponent(productId)}`, { method: "DELETE" }),
+
+  // Notifications
+  notifications: () => request<import("./types").Notification[]>("/api/notifications"),
+  markNotificationRead: (id: string) =>
+    request<import("./types").Notification>(`/api/notifications/${encodeURIComponent(id)}/read`, {
+      method: "PATCH",
+    }),
+  markAllNotificationsRead: () =>
+    request<void>("/api/notifications/read-all", { method: "PATCH" }),
+
+  // Seller Dashboard
+  sellerProfile: () => request<any>("/api/seller-dashboard/profile"),
+  updateSellerProfile: (body: any) =>
+    request<any>("/api/seller-dashboard/profile", {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  sellerStats: () => request<any>("/api/seller-dashboard/stats"),
+  sellerProducts: () => request<import("./types").Product[]>("/api/seller-dashboard/products"),
+  sellerCreateProduct: (body: any) =>
+    request<import("./types").Product>("/api/seller-dashboard/products", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  sellerUpdateProduct: (id: string, body: any) =>
+    request<import("./types").Product>(`/api/seller-dashboard/products/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+  sellerDeleteProduct: (id: string) =>
+    request<void>(`/api/seller-dashboard/products/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  sellerOrders: () => request<any[]>("/api/seller-dashboard/orders"),
+  sellerUpdateOrderStatus: (id: string, status: string) =>
+    request<any>(`/api/seller-dashboard/orders/${encodeURIComponent(id)}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    }),
+  sellerStock: () => request<any[]>("/api/seller-dashboard/stock"),
+
+  // Payment simulator
+  payOrder: (id: string) =>
+    request<import("./types").Order>(`/api/orders/${encodeURIComponent(id)}/pay`, {
+      method: "POST",
+    }),
+  verifyPayos: (id: string) =>
+    request<import("./types").Order>(`/api/orders/${encodeURIComponent(id)}/verify-payos`, {
+      method: "POST",
+    }),
+  getPayosLink: (id: string) =>
+    request<{ checkoutUrl: string }>(`/api/orders/${encodeURIComponent(id)}/payos-link`),
+};

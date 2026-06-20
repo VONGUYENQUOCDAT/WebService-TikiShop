@@ -18,6 +18,11 @@ export default function CheckoutPage() {
   const [phone, setPhone] = useState("");
   const [subtotal, setSubtotal] = useState(0);
   const [err, setErr] = useState<string | null>(null);
+
+  const hasInsufficientStock = useMemo(
+    () => cartItems.some((row) => row.product.stock_quantity === 0 || row.quantity > row.product.stock_quantity),
+    [cartItems]
+  );
   
   // Administrative address states
   const [provinces, setProvinces] = useState<any[]>([]);
@@ -34,6 +39,63 @@ export default function CheckoutPage() {
 
   const [streetAddress, setStreetAddress] = useState("");
   const [addressType, setAddressType] = useState<"HOME" | "OFFICE">("HOME");
+
+  // Address Book Integration
+  const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string>("");
+  const [paymentMethod, setPaymentMethod] = useState<"COD" | "ONLINE">("COD");
+
+  useEffect(() => {
+    if (token) {
+      api.addresses()
+        .then((list) => {
+          setSavedAddresses(list);
+          const def = list.find((a) => a.isDefault);
+          if (def) {
+            setSelectedAddressId(def.id);
+            autofillAddress(def);
+          } else if (list.length > 0) {
+            setSelectedAddressId(list[0].id);
+            autofillAddress(list[0]);
+          } else {
+            setSelectedAddressId("new");
+          }
+        })
+        .catch((e) => console.error("Lỗi tải danh sách địa chỉ:", e));
+    }
+  }, [token]);
+
+  const autofillAddress = (addr: any) => {
+    setSelectedProvinceCode(addr.provinceId);
+    setSelectedProvinceName(addr.provinceName);
+    setSelectedDistrictCode(addr.districtId);
+    setSelectedDistrictName(addr.districtName);
+    setSelectedWardCode(addr.wardId);
+    setSelectedWardName(addr.wardName);
+    setStreetAddress(addr.streetAddress);
+    setAddressType(addr.addressType);
+  };
+
+  const handleSavedAddressChange = (val: string) => {
+    setSelectedAddressId(val);
+    if (val === "new") {
+      setSelectedProvinceCode("");
+      setSelectedDistrictCode("");
+      setSelectedWardCode("");
+      setSelectedProvinceName("");
+      setSelectedDistrictName("");
+      setSelectedWardName("");
+      setStreetAddress("");
+      setAddressType("HOME");
+      setFieldErrors({});
+    } else {
+      const addr = savedAddresses.find((a) => a.id === val);
+      if (addr) {
+        autofillAddress(addr);
+        setFieldErrors({});
+      }
+    }
+  };
   
   // Shipping calculation state
   const [shippingFee, setShippingFee] = useState(0);
@@ -254,11 +316,13 @@ export default function CheckoutPage() {
     
     // Perform custom cascading address form validation
     const fe: typeof fieldErrors = {};
-    if (!selectedProvinceCode) fe.province = "Vui lòng chọn Tỉnh/Thành phố";
-    if (!selectedDistrictCode) fe.district = "Vui lòng chọn Quận/Huyện";
-    if (!selectedWardCode) fe.ward = "Vui lòng chọn Phường/Xã";
-    if (!streetAddress.trim() || streetAddress.trim().length < 5) {
-      fe.streetAddress = "Vui lòng nhập địa chỉ cụ thể (tối thiểu 5 ký tự)";
+    if (selectedAddressId === "new") {
+      if (!selectedProvinceCode) fe.province = "Vui lòng chọn Tỉnh/Thành phố";
+      if (!selectedDistrictCode) fe.district = "Vui lòng chọn Quận/Huyện";
+      if (!selectedWardCode) fe.ward = "Vui lòng chọn Phường/Xã";
+      if (!streetAddress.trim() || streetAddress.trim().length < 5) {
+        fe.streetAddress = "Vui lòng nhập địa chỉ cụ thể (tối thiểu 5 ký tự)";
+      }
     }
     if (!phone.trim() || phone.trim().length < 8) {
       fe.phone = "Vui lòng nhập số điện thoại liên hệ hợp lệ";
@@ -272,8 +336,9 @@ export default function CheckoutPage() {
 
     try {
       const order = await api.checkout({
-        address: fullAddressText,
+        address: selectedAddressId !== "new" ? undefined : fullAddressText,
         phone: phone.trim(),
+        addressId: selectedAddressId !== "new" ? selectedAddressId : undefined,
         cartItemIds: cartItems.map((i) => i.id),
         provinceId: selectedProvinceCode,
         provinceName: selectedProvinceName,
@@ -284,6 +349,7 @@ export default function CheckoutPage() {
         streetAddress: streetAddress.trim(),
         addressType: addressType,
         voucherCode: voucherCode || undefined,
+        paymentMethod: paymentMethod,
       });
       try {
         const c = await api.cart();
@@ -291,7 +357,11 @@ export default function CheckoutPage() {
       } catch {
         useCartStore.getState().setCount(0);
       }
-      navigate(`/tai-khoan/don-hang/${order.id}`, { replace: true });
+      if (order.checkoutUrl) {
+        window.location.href = order.checkoutUrl;
+      } else {
+        navigate(`/tai-khoan/don-hang/${order.id}`, { replace: true });
+      }
     } catch (e) {
       setErr((e as Error).message);
     } finally {
@@ -334,117 +404,152 @@ export default function CheckoutPage() {
         <section className={styles.formCard}>
           <h2 className={styles.sectionTitle}>Thông tin giao hàng</h2>
           <form noValidate className={styles.form} onSubmit={submit}>
-            {/* 3 Dropdowns địa chỉ phụ thuộc */}
-            <div className={styles.addressGrid}>
-              <label>
-                Tỉnh / Thành phố *
-                <select
-                  className={`input ${fieldErrors.province ? "input--invalid" : ""}`}
-                  value={selectedProvinceCode}
-                  onChange={handleProvinceChange}
-                >
-                  <option value="">-- Chọn Tỉnh/Thành --</option>
-                  {provinces.map((p) => (
-                    <option key={p.code} value={p.code}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-                {fieldErrors.province && (
-                  <span className="field-error" role="alert">
-                    {fieldErrors.province}
-                  </span>
-                )}
-              </label>
-
-              <label>
-                Quận / Huyện *
-                <select
-                  className={`input ${fieldErrors.district ? "input--invalid" : ""}`}
-                  value={selectedDistrictCode}
-                  onChange={handleDistrictChange}
-                  disabled={!selectedProvinceCode}
-                >
-                  <option value="">-- Chọn Quận/Huyện --</option>
-                  {districts.map((d) => (
-                    <option key={d.code} value={d.code}>
-                      {d.name}
-                    </option>
-                  ))}
-                </select>
-                {fieldErrors.district && (
-                  <span className="field-error" role="alert">
-                    {fieldErrors.district}
-                  </span>
-                )}
-              </label>
-
-              <label>
-                Phường / Xã *
-                <select
-                  className={`input ${fieldErrors.ward ? "input--invalid" : ""}`}
-                  value={selectedWardCode}
-                  onChange={handleWardChange}
-                  disabled={!selectedDistrictCode}
-                >
-                  <option value="">-- Chọn Phường/Xã --</option>
-                  {wards.map((w) => (
-                    <option key={w.code} value={w.code}>
-                      {w.name}
-                    </option>
-                  ))}
-                </select>
-                {fieldErrors.ward && (
-                  <span className="field-error" role="alert">
-                    {fieldErrors.ward}
-                  </span>
-                )}
-              </label>
-            </div>
-
-            <label>
-              Số nhà, tên đường *
-              <textarea
-                className={`input ${fieldErrors.streetAddress ? "input--invalid" : ""}`}
-                rows={2}
-                value={streetAddress}
-                onChange={(e) => {
-                  setStreetAddress(e.target.value);
-                  setFieldErrors((p) => ({ ...p, streetAddress: undefined }));
-                }}
-                placeholder="VD: số 12 đường Hoàng Diệu..."
-                aria-invalid={Boolean(fieldErrors.streetAddress)}
-              />
-              {fieldErrors.streetAddress && (
-                <span className="field-error" role="alert">
-                  {fieldErrors.streetAddress}
-                </span>
-              )}
-            </label>
-
-            <label>
-              Loại địa chỉ
-              <div className={styles.typeSelector}>
-                <label className={styles.typeOption}>
-                  <input
-                    type="radio"
-                    name="addressType"
-                    checked={addressType === "HOME"}
-                    onChange={() => setAddressType("HOME")}
-                  />
-                  <span>Nhà riêng</span>
-                </label>
-                <label className={styles.typeOption}>
-                  <input
-                    type="radio"
-                    name="addressType"
-                    checked={addressType === "OFFICE"}
-                    onChange={() => setAddressType("OFFICE")}
-                  />
-                  <span>Cơ quan / Văn phòng</span>
+            {/* Address Selector */}
+            {savedAddresses.length > 0 && (
+              <div className={styles.savedAddressSelector}>
+                <label>
+                  Chọn địa chỉ nhận hàng:
+                  <select value={selectedAddressId} onChange={(e) => handleSavedAddressChange(e.target.value)}>
+                    {savedAddresses.map((addr) => (
+                      <option key={addr.id} value={addr.id}>
+                        {addr.isDefault ? "[Mặc định] " : ""}{addr.streetAddress}, {addr.wardName}, {addr.districtName}, {addr.provinceName} ({addr.addressType === "HOME" ? "Nhà riêng" : "Văn phòng"})
+                      </option>
+                    ))}
+                    <option value="new">-- Nhập địa chỉ mới --</option>
+                  </select>
                 </label>
               </div>
-            </label>
+            )}
+
+            {/* Selected Address Display Card */}
+            {selectedAddressId !== "new" && selectedAddressId !== "" && (
+              <div className={styles.selectedAddressCard}>
+                <div className={styles.selectedAddressHeader}>
+                  <span>Địa chỉ giao hàng đã chọn</span>
+                  <span style={{ fontSize: 11, background: "#1a94ff", color: "#fff", padding: "1px 6px", borderRadius: 4 }}>
+                    {addressType === "HOME" ? "Nhà riêng" : "Văn phòng"}
+                  </span>
+                </div>
+                <div>{streetAddress}</div>
+                <div>{selectedWardName}, {selectedDistrictName}, {selectedProvinceName}</div>
+              </div>
+            )}
+
+            {/* 3 Dropdowns địa chỉ phụ thuộc (Only show for new addresses) */}
+            {selectedAddressId === "new" && (
+              <>
+                <div className={styles.addressGrid}>
+                  <label>
+                    Tỉnh / Thành phố *
+                    <select
+                      className={`input ${fieldErrors.province ? "input--invalid" : ""}`}
+                      value={selectedProvinceCode}
+                      onChange={handleProvinceChange}
+                    >
+                      <option value="">-- Chọn Tỉnh/Thành --</option>
+                      {provinces.map((p) => (
+                        <option key={p.code} value={p.code}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                    {fieldErrors.province && (
+                      <span className="field-error" role="alert">
+                        {fieldErrors.province}
+                      </span>
+                    )}
+                  </label>
+
+                  <label>
+                    Quận / Huyện *
+                    <select
+                      className={`input ${fieldErrors.district ? "input--invalid" : ""}`}
+                      value={selectedDistrictCode}
+                      onChange={handleDistrictChange}
+                      disabled={!selectedProvinceCode}
+                    >
+                      <option value="">-- Chọn Quận/Huyện --</option>
+                      {districts.map((d) => (
+                        <option key={d.code} value={d.code}>
+                          {d.name}
+                        </option>
+                      ))}
+                    </select>
+                    {fieldErrors.district && (
+                      <span className="field-error" role="alert">
+                        {fieldErrors.district}
+                      </span>
+                    )}
+                  </label>
+
+                  <label>
+                    Phường / Xã *
+                    <select
+                      className={`input ${fieldErrors.ward ? "input--invalid" : ""}`}
+                      value={selectedWardCode}
+                      onChange={handleWardChange}
+                      disabled={!selectedDistrictCode}
+                    >
+                      <option value="">-- Chọn Phường/Xã --</option>
+                      {wards.map((w) => (
+                        <option key={w.code} value={w.code}>
+                          {w.name}
+                        </option>
+                      ))}
+                    </select>
+                    {fieldErrors.ward && (
+                      <span className="field-error" role="alert">
+                        {fieldErrors.ward}
+                      </span>
+                    )}
+                  </label>
+                </div>
+
+                <label>
+                  Số nhà, tên đường *
+                  <textarea
+                    className={`input ${fieldErrors.streetAddress ? "input--invalid" : ""}`}
+                    rows={2}
+                    value={streetAddress}
+                    onChange={(e) => {
+                      setStreetAddress(e.target.value);
+                      setFieldErrors((p) => ({ ...p, streetAddress: undefined }));
+                    }}
+                    placeholder="VD: số 12 đường Hoàng Diệu..."
+                    aria-invalid={Boolean(fieldErrors.streetAddress)}
+                  />
+                  {fieldErrors.streetAddress && (
+                    <span className="field-error" role="alert">
+                      {fieldErrors.streetAddress}
+                    </span>
+                  )}
+                </label>
+
+                <label>
+                  Loại địa chỉ
+                  <div className={styles.typeSelector}>
+                    <label className={styles.typeOption}>
+                      <input
+                        type="radio"
+                        name="addressType"
+                        checked={addressType === "HOME"}
+                        onChange={() => setAddressType("HOME")}
+                      />
+                      <span>Nhà riêng</span>
+                    </label>
+                    <label className={styles.typeOption}>
+                      <input
+                        type="radio"
+                        name="addressType"
+                        checked={addressType === "OFFICE"}
+                        onChange={() => setAddressType("OFFICE")}
+                      />
+                      <span>Cơ quan / Văn phòng</span>
+                    </label>
+                  </div>
+                </label>
+              </>
+            )}
 
             <label>
               Số điện thoại liên hệ *
@@ -469,13 +574,32 @@ export default function CheckoutPage() {
 
             <div className={styles.codBlock}>
               <h3 className={styles.codTitle}>Phương thức thanh toán</h3>
-              <label className={styles.codChoice}>
-                <input type="radio" name="pay" checked readOnly />
-                <span>
-                  <strong>Thanh toán tiền mặt khi nhận hàng (COD)</strong>
-                  <span className={styles.codHint}>Bạn thanh toán bằng tiền mặt cho shipper khi nhận đơn — giống mặc định trên Tiki.</span>
-                </span>
-              </label>
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <label className={styles.codChoice}>
+                  <input
+                    type="radio"
+                    name="payMethod"
+                    checked={paymentMethod === "COD"}
+                    onChange={() => setPaymentMethod("COD")}
+                  />
+                  <span>
+                    <strong>Thanh toán tiền mặt khi nhận hàng (COD)</strong>
+                    <span className={styles.codHint}>Bạn thanh toán bằng tiền mặt cho shipper khi nhận đơn — giống mặc định trên Tiki.</span>
+                  </span>
+                </label>
+                <label className={styles.codChoice} style={{ borderTop: "1px solid #e2e8f0", paddingTop: 12 }}>
+                  <input
+                    type="radio"
+                    name="payMethod"
+                    checked={paymentMethod === "ONLINE"}
+                    onChange={() => setPaymentMethod("ONLINE")}
+                  />
+                  <span>
+                    <strong>Thanh toán trực tuyến giả lập (ONLINE)</strong>
+                    <span className={styles.codHint}>Thanh toán qua ví điện tử/thẻ ngân hàng (Giả lập để bạn test luồng dễ dàng).</span>
+                  </span>
+                </label>
+              </div>
             </div>
 
             {err && (
@@ -483,8 +607,13 @@ export default function CheckoutPage() {
                 {err}
               </p>
             )}
+            {hasInsufficientStock && (
+              <p className="form-alert" role="alert" style={{ color: "#ef4444", marginBottom: 12 }}>
+                Một số sản phẩm trong đơn hàng không đủ tồn kho. Vui lòng quay lại giỏ hàng để điều chỉnh số lượng.
+              </p>
+            )}
             <div className={styles.actions}>
-              <button type="submit" className="btn btn-primary" disabled={loading}>
+              <button type="submit" className="btn btn-primary" disabled={loading || hasInsufficientStock}>
                 {loading ? "Đang đặt hàng…" : "Đặt hàng"}
               </button>
               <Link to="/gio-hang" className={styles.backLink}>
@@ -511,6 +640,15 @@ export default function CheckoutPage() {
                   <div className={styles.lineMeta}>
                     SL: {row.quantity} · {formatPrice(row.product.price)} / sản phẩm
                   </div>
+                  {row.product.stock_quantity === 0 ? (
+                    <div style={{ color: "#ef4444", fontSize: "0.82rem", fontWeight: 700, marginTop: 4 }}>
+                      Out of stock / Hết hàng
+                    </div>
+                  ) : row.quantity > row.product.stock_quantity ? (
+                    <div style={{ color: "#f59e0b", fontSize: "0.82rem", fontWeight: 600, marginTop: 4 }}>
+                      ⚠️ Exceeds stock (Only {row.product.stock_quantity} left)
+                    </div>
+                  ) : null}
                 </div>
                 <div className={styles.linePrice}>{formatPrice(row.product.price * row.quantity)}</div>
               </li>

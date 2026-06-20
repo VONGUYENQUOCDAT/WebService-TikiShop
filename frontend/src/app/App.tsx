@@ -91,6 +91,9 @@ function App() {
           <Route path="tai-khoan/don-hang" element={<AccountPage />} />
           <Route path="tai-khoan/don-hang/:id" element={<AccountPage />} />
           <Route path="tai-khoan/cai-dat" element={<AccountPage />} />
+          <Route path="tai-khoan/dia-chi" element={<AccountPage />} />
+          <Route path="tai-khoan/thong-bao" element={<AccountPage />} />
+          <Route path="tai-khoan/yeu-thich" element={<AccountPage />} />
 
           {/* Backward compatibility: redirect old standalone order URLs */}
           <Route path="don-hang/:id" element={<RedirectOrderDetail />} />

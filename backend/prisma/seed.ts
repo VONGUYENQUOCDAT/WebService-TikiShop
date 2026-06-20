@@ -1027,7 +1027,7 @@ async function main() {
 
   // 6. Create Products, link Branch Products with 0 stock
   console.log("Seeding Products and Branch Products (Init 0)...");
-  const createdProducts: Array<{ id: string; name: string; sku: string; brand: string | null }> = [];
+  const createdProducts: Array<{ id: string; name: string; sku: string; brand: string | null; categorySlug: string; price: number }> = [];
   for (const x of products) {
     const cid = createdCats[x.categoryId];
     const imageUrl = imageUrls[x.slug] || `https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=280&h=280&fit=crop`;
@@ -1053,6 +1053,7 @@ async function main() {
         brand: x.brand ?? null,
         tags: x.tags ?? null,
         categoryId: cid,
+        stock_quantity: 0,
       },
     });
 
@@ -1222,6 +1223,12 @@ async function main() {
             }
           },
           data: { stock: 50 }
+        });
+
+        // Update Product stock_quantity to sum of stocks
+        await prisma.product.update({
+          where: { id: grItem.productId },
+          data: { stock_quantity: { increment: 50 } }
         });
       }
     }

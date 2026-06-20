@@ -57,6 +57,10 @@ export default function CartPage() {
   );
   const allSelected = items.length > 0 && selectedLines.length === items.length;
   const noneSelected = selectedLines.length === 0;
+  const hasInsufficientStock = useMemo(
+    () => selectedLines.some((line) => line.product.stock_quantity === 0 || line.quantity > line.product.stock_quantity),
+    [selectedLines]
+  );
 
   const toggleRow = (id: string) => {
     setSelectedIds((prev) => {
@@ -196,19 +200,28 @@ export default function CartPage() {
                       {row.product.name}
                     </Link>
                     <div className={styles.price}>{formatPrice(row.product.price)}</div>
+                    {row.product.stock_quantity === 0 ? (
+                      <div className={styles.outOfStockLabel} style={{ color: "#ef4444", fontSize: "0.82rem", fontWeight: 700, marginTop: 4 }}>
+                        Out of stock / Hết hàng
+                      </div>
+                    ) : row.quantity > row.product.stock_quantity ? (
+                      <div className={styles.insufficientStockLabel} style={{ color: "#f59e0b", fontSize: "0.82rem", fontWeight: 600, marginTop: 4 }}>
+                        ⚠️ Exceeds stock (Only {row.product.stock_quantity} left)
+                      </div>
+                    ) : null}
                     <div className={styles.qty}>
                       <button
                         type="button"
                         onClick={() => updateQty(row.id, Math.max(1, row.quantity - 1))}
-                        disabled={row.quantity <= 1 || actionLoading === row.id}
+                        disabled={row.quantity <= 1 || actionLoading === row.id || row.product.stock_quantity === 0}
                       >
                         −
                       </button>
                       <span>{row.quantity}</span>
                       <button
                         type="button"
-                        onClick={() => updateQty(row.id, Math.min(99, row.quantity + 1))}
-                        disabled={row.quantity >= 99 || actionLoading === row.id}
+                        onClick={() => updateQty(row.id, Math.min(Math.min(99, row.product.stock_quantity), row.quantity + 1))}
+                        disabled={row.quantity >= row.product.stock_quantity || actionLoading === row.id}
                       >
                         +
                       </button>
@@ -250,11 +263,16 @@ export default function CartPage() {
                   Hãy chọn ít nhất một sản phẩm để tiếp tục.
                 </p>
               )}
+              {hasInsufficientStock && (
+                <p className={styles.warn} role="status" style={{ color: "#ef4444" }}>
+                  Một số sản phẩm đã chọn không đủ hàng. Vui lòng giảm số lượng.
+                </p>
+              )}
               <button
                 type="button"
                 className="btn btn-primary btn-lg"
                 onClick={goCheckout}
-                disabled={noneSelected}
+                disabled={noneSelected || hasInsufficientStock}
                 style={{ width: "100%", marginTop: 8 }}
               >
                 Mua hàng ({selectedLines.length})

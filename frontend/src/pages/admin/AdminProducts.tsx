@@ -17,6 +17,7 @@ type Draft = {
   rating: string;
   reviewCount: string;
   sold: string;
+  stock_quantity: string;
   badge: string;
   brand: string;
   tags: string;
@@ -39,6 +40,7 @@ function toDraft(p: Product): Draft {
     rating: String(p.rating),
     reviewCount: String(p.reviewCount),
     sold: String(p.sold),
+    stock_quantity: String(p.stock_quantity),
     badge: p.badge ?? "",
     brand: p.brand ?? "",
     tags: p.tags ?? "",
@@ -57,6 +59,7 @@ function emptyDraft(categoryId: string): Draft {
     rating: "4.5",
     reviewCount: "0",
     sold: "0",
+    stock_quantity: "0",
     badge: "",
     brand: "",
     tags: "",
@@ -73,6 +76,7 @@ function buildBody(draft: Draft): Record<string, unknown> {
   const rating = Number(draft.rating);
   const reviewCount = Math.round(Number(draft.reviewCount));
   const sold = Math.round(Number(draft.sold));
+  const stock_quantity = Math.round(Number(draft.stock_quantity));
   return {
     name: draft.name.trim(),
     slug,
@@ -83,6 +87,7 @@ function buildBody(draft: Draft): Record<string, unknown> {
     rating,
     reviewCount,
     sold,
+    stock_quantity,
     badge: draft.badge.trim() || null,
     brand: draft.brand.trim() || null,
     tags: draft.tags.trim() || null,
@@ -222,12 +227,13 @@ export default function AdminProducts() {
     const rating = Number(draft.rating);
     const reviewCount = Math.round(Number(draft.reviewCount));
     const sold = Math.round(Number(draft.sold));
+    const stock_quantity = Math.round(Number(draft.stock_quantity));
     if (!Number.isFinite(rating) || rating < 0 || rating > 5) {
       setErr("Đánh giá (sao) phải từ 0 đến 5");
       return;
     }
-    if (!Number.isFinite(reviewCount) || reviewCount < 0 || !Number.isFinite(sold) || sold < 0) {
-      setErr("Số lượng đánh giá / đã bán không hợp lệ");
+    if (!Number.isFinite(reviewCount) || reviewCount < 0 || !Number.isFinite(sold) || sold < 0 || !Number.isFinite(stock_quantity) || stock_quantity < 0) {
+      setErr("Số lượng đánh giá / đã bán / tồn kho không hợp lệ");
       return;
     }
     if (!draft.name.trim()) {
@@ -366,6 +372,10 @@ export default function AdminProducts() {
               <input className={styles.input} value={draft.sold} onChange={(e) => setDraft({ ...draft, sold: e.target.value })} />
             </label>
             <label className={styles.field}>
+              <span className={styles.fieldLabel}>Tồn kho</span>
+              <input className={styles.input} type="number" min="0" value={draft.stock_quantity} onChange={(e) => setDraft({ ...draft, stock_quantity: e.target.value })} />
+            </label>
+            <label className={styles.field}>
               <span className={styles.fieldLabel}>Badge</span>
               <input className={styles.input} value={draft.badge} onChange={(e) => setDraft({ ...draft, badge: e.target.value })} />
             </label>
@@ -463,6 +473,7 @@ export default function AdminProducts() {
                   <th>Tên</th>
                   <th>Giá</th>
                   <th>Danh mục</th>
+                  <th>Tồn kho</th>
                   <th />
                 </tr>
               </thead>
@@ -474,6 +485,7 @@ export default function AdminProducts() {
                     </td>
                     <td>{formatPrice(p.price)}</td>
                     <td className={styles.muted}>{p.category?.name ?? "—"}</td>
+                    <td style={{ fontWeight: 600 }}>{p.stock_quantity}</td>
                     <td>
                       <div className={styles.rowBtns}>
                         <button type="button" className={styles.btnSm} onClick={() => openEdit(p)}>

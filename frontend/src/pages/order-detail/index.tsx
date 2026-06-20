@@ -26,14 +26,30 @@ export default function OrderDetailPage() {
     }
     setErr(null);
     setLoading(true);
-    api
-      .order(id)
-      .then(setOrder)
-      .catch((e: Error) => {
+
+    const fetchOrder = async () => {
+      try {
+        let ord = await api.order(id);
+        
+        // If order uses ONLINE payment and is not marked PAID, check status on PayOS
+        if (ord.paymentMethod === "ONLINE" && ord.paymentStatus !== "PAID") {
+          try {
+            ord = await api.verifyPayos(id);
+          } catch (e) {
+            console.error("Lỗi đồng bộ PayOS:", e);
+          }
+        }
+        
+        setOrder(ord);
+      } catch (e: any) {
         setOrder(null);
         setErr(e.message);
-      })
-      .finally(() => setLoading(false));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrder();
   }, [token, id]);
 
   const cancel = async () => {
@@ -128,8 +144,44 @@ export default function OrderDetailPage() {
 
         <p className={styles.total}>{formatPrice(order.total)}</p>
         <p className={styles.codNote}>
-          <strong>Thanh toán:</strong> COD — thanh toán khi nhận hàng (demo).
+          <strong>Thanh toán:</strong>{" "}
+          {order.paymentMethod === "ONLINE" ? (
+            <span>
+              Thanh toán trực tuyến (ONLINE) —{" "}
+              {order.paymentStatus === "PAID" ? (
+                <span style={{ color: "#00ab56", fontWeight: "bold" }}>Đã thanh toán</span>
+              ) : (
+                <span style={{ color: "#ff7a00", fontWeight: "bold" }}>Chưa thanh toán (Chờ giao dịch)</span>
+              )}
+            </span>
+          ) : (
+            <span>COD — thanh toán khi nhận hàng (demo)</span>
+          )}
         </p>
+
+        {order.paymentMethod === "ONLINE" && order.paymentStatus !== "PAID" && order.status !== "cancelled" && (
+          <div style={{ margin: "16px 0", padding: "16px", backgroundColor: "#f0fdf4", border: "1px dashed #4ade80", borderRadius: "8px" }}>
+            <p style={{ margin: "0 0 10px 0", fontSize: "14px", color: "#166534" }}>
+              Đơn hàng của bạn chưa được thanh toán trực tuyến. Vui lòng bấm nút bên dưới để thanh toán qua cổng PayOS.
+            </p>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={async () => {
+                try {
+                  const res = await api.getPayosLink(order.id);
+                  if (res.checkoutUrl) {
+                    window.location.href = res.checkoutUrl;
+                  }
+                } catch (e: any) {
+                  alert(e.message || "Không lấy được link thanh toán PayOS");
+                }
+              }}
+            >
+              Thanh toán ngay qua PayOS
+            </button>
+          </div>
+        )}
         <p>
           <strong>Điện thoại:</strong> {order.phone}
         </p>

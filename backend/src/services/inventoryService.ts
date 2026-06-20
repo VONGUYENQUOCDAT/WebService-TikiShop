@@ -107,6 +107,11 @@ export class InventoryService {
           }
         });
 
+        await tx.product.update({
+          where: { id: grItem.productId },
+          data: { stock_quantity: { increment: grItem.qtyReceived } }
+        });
+
         await tx.inventoryLedger.create({
           data: {
             productId: grItem.productId,
@@ -358,6 +363,11 @@ export class InventoryService {
             stock: { decrement: grItem.qtyReceived }
           }
         });
+
+        await tx.product.update({
+          where: { id: grItem.productId },
+          data: { stock_quantity: { decrement: grItem.qtyReceived } }
+        });
       }
 
       // Delete ledgers, batches, items, and the receipt itself
@@ -450,6 +460,11 @@ export class InventoryService {
           data: {
             stock: { decrement: grItem.qtyReceived }
           }
+        });
+
+        await tx.product.update({
+          where: { id: grItem.productId },
+          data: { stock_quantity: { decrement: grItem.qtyReceived } }
         });
       }
 
@@ -545,6 +560,11 @@ export class InventoryService {
             stock: item.qtyReceived,
             minStock: 10
           }
+        });
+
+        await tx.product.update({
+          where: { id: item.productId },
+          data: { stock_quantity: { increment: item.qtyReceived } }
         });
 
         // Create Ledger Entry

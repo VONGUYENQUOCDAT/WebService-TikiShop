@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { authRequired, adminRequired } from "../middleware/auth.js";
+import { NotificationService } from "../services/notificationService.js";
 
 const router = Router();
 router.use(authRequired);
@@ -17,6 +18,7 @@ const createReturnSchema = z.object({
       })
     )
     .min(1, "Cần ít nhất 1 sản phẩm để trả"),
+  evidenceUrls: z.array(z.string().url()).optional(),
 });
 
 /**
@@ -61,6 +63,19 @@ router.post("/", async (req, res) => {
       return;
     }
 
+    // 1b. Check return eligibility (within 7 days of delivery)
+    const deliveryOrder = await prisma.deliveryOrder.findUnique({
+      where: { orderId: order_id }
+    });
+    const deliveryDate = deliveryOrder?.actual_delivery_date || deliveryOrder?.createdAt || order.createdAt;
+    const daysSinceDelivery = (Date.now() - new Date(deliveryDate).getTime()) / (1000 * 60 * 60 * 24);
+    if (daysSinceDelivery > 7) {
+      res.status(400).json({
+        error: "Đã quá thời hạn 7 ngày đổi trả sản phẩm kể từ ngày nhận hàng.",
+      });
+      return;
+    }
+
     // 2. Check for existing return request on this order
     const existingReturn = await prisma.returnRequest.findFirst({
       where: { orderId: order_id },
@@ -94,6 +109,8 @@ router.post("/", async (req, res) => {
       validatedItems.push({ product_id: item.product_id, return_quantity: item.return_quantity, price: orderItem.price });
     }
 
+    const { evidenceUrls } = parsed.data;
+
     // 4. Create ReturnRequest + ReturnItems in transaction
     const returnRequest = await prisma.$transaction(async (tx) => {
       const rr = await tx.returnRequest.create({
@@ -102,6 +119,7 @@ router.post("/", async (req, res) => {
           userId,
           reason,
           refund_amount,
+          evidenceUrls: JSON.stringify(evidenceUrls ?? []),
           items: {
             create: validatedItems.map((vi) => ({
               productId: vi.product_id,
@@ -223,6 +241,12 @@ router.post("/admin/:id/approve", adminRequired, async (req, res) => {
       where: { id },
       data: { status: "APPROVED" },
     });
+    // Trigger notification
+    await NotificationService.createNotification(
+      updated.userId,
+      "Yêu cầu trả hàng được chấp nhận",
+      `Yêu cầu trả hàng #${updated.id} cho đơn hàng #${updated.orderId} đã được duyệt.`
+    );
     res.json(updated);
   } catch (err: any) {
     res.status(500).json({ error: err.message || "Failed to approve return request" });
@@ -237,6 +261,12 @@ router.post("/admin/:id/reject", adminRequired, async (req, res) => {
       where: { id },
       data: { status: "REJECTED" },
     });
+    // Trigger notification
+    await NotificationService.createNotification(
+      updated.userId,
+      "Yêu cầu trả hàng bị từ chối",
+      `Yêu cầu trả hàng #${updated.id} cho đơn hàng #${updated.orderId} đã bị từ chối.`
+    );
     res.json(updated);
   } catch (err: any) {
     res.status(500).json({ error: err.message || "Failed to reject return request" });
@@ -271,20 +301,66 @@ router.post("/admin/:id/receive", adminRequired, async (req, res) => {
         }
 
         if (item.condition === "INTACT" && request.order.branchId) {
-          const branchProduct = await tx.branchProduct.findUnique({
+          // Find the original SALE ledger logs to find which batches the stock was taken from
+          const saleLedgers = await tx.inventoryLedger.findMany({
             where: {
-              branchId_productId: {
-                branchId: request.order.branchId,
-                productId: item.product_id as string,
-              },
+              sourceDocId: request.orderId,
+              productId: item.product_id as string,
+              movementType: "SALE",
             },
           });
 
-          if (branchProduct) {
-            await tx.branchProduct.update({
-              where: { id: branchProduct.id },
-              data: { stock: { increment: item.return_quantity } },
+          let qtyToRevert = item.return_quantity;
+
+          for (const ledger of saleLedgers) {
+            if (qtyToRevert <= 0) break;
+            const maxRevertable = Math.abs(ledger.qtyChange);
+            const amtToRevertThisBatch = Math.min(qtyToRevert, maxRevertable);
+
+            // Revert Batch remaining quantity
+            await tx.inventoryBatch.update({
+              where: { id: ledger.batchId },
+              data: { remainingQty: { increment: amtToRevertThisBatch } },
             });
+
+            // Revert BranchProduct stock level
+            const bp = await tx.branchProduct.upsert({
+              where: {
+                branchId_productId: {
+                  branchId: request.order.branchId,
+                  productId: item.product_id as string,
+                },
+              },
+              update: {
+                stock: { increment: amtToRevertThisBatch },
+              },
+              create: {
+                branchId: request.order.branchId,
+                productId: item.product_id as string,
+                stock: amtToRevertThisBatch,
+                minStock: 10,
+              },
+            });
+
+            await tx.product.update({
+              where: { id: item.product_id as string },
+              data: { stock_quantity: { increment: amtToRevertThisBatch } }
+            });
+
+            // Log ledger adjustment entry
+            await tx.inventoryLedger.create({
+              data: {
+                productId: item.product_id as string,
+                branchId: request.order.branchId,
+                batchId: ledger.batchId,
+                movementType: "ADJUSTMENT",
+                qtyChange: amtToRevertThisBatch,
+                balanceAfter: bp.stock,
+                sourceDocId: request.id,
+              },
+            });
+
+            qtyToRevert -= amtToRevertThisBatch;
           }
         }
       }
@@ -294,6 +370,13 @@ router.post("/admin/:id/receive", adminRequired, async (req, res) => {
         where: { id },
         data: { status: "COMPLETED" },
       });
+
+      // Trigger notification
+      await NotificationService.createNotification(
+        updated.userId,
+        "Hoàn tất trả hàng & hoàn tiền",
+        `Yêu cầu trả hàng #${updated.id} đã hoàn tất nhận hàng và xử lý hoàn trả.`
+      );
 
       return updated;
     });

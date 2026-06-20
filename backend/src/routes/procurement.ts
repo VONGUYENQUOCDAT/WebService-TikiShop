@@ -186,7 +186,8 @@ router.post("/purchase-orders", async (req, res) => {
               image: np.image,
               categoryId: np.categoryId,
               brand: np.brand ?? null,
-              tags: np.tags ?? null
+              tags: np.tags ?? null,
+              stock_quantity: 0
             }
           });
 

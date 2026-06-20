@@ -17,11 +17,13 @@ export type Product = {
   rating: number;
   reviewCount: number;
   sold: number;
+  stock_quantity: number;
   badge: string | null;
   brand: string | null;
   tags: string | null;
   categoryId: string;
   category?: Category;
+  shop?: Shop;
 };
 
 export type UserRole = "USER" | "SELLER" | "ADMIN" | "AUDITOR" | "STORE_MANAGER";
@@ -60,6 +62,8 @@ export type Order = {
   shippingFee: number;
   discount: number;
   voucherCode?: string | null;
+  paymentMethod?: string | null;
+  paymentStatus?: string | null;
   items: Array<{
     id: string;
     quantity: number;
@@ -208,3 +212,28 @@ export type Shop = {
     phone: string | null;
   };
 };
+
+export type Address = {
+  id: string;
+  userId: string;
+  provinceId: string;
+  provinceName: string;
+  districtId: string;
+  districtName: string;
+  wardId: string;
+  wardName: string;
+  streetAddress: string;
+  addressType: "HOME" | "OFFICE";
+  isDefault: boolean;
+  createdAt: string;
+};
+
+export type Notification = {
+  id: string;
+  userId: string;
+  title: string;
+  content: string;
+  isRead: boolean;
+  createdAt: string;
+};
+

@@ -58,7 +58,7 @@ const LEAVES = Array.from({ length: 6 }).map((_, i) => ({
 
 export default function HeroSection() {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
+  const autoPlayRef = useRef<any>(null);
 
   const startAutoPlay = () => {
     stopAutoPlay();

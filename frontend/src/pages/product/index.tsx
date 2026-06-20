@@ -33,14 +33,18 @@ export default function ProductPage() {
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [reviewsPage, setReviewsPage] = useState(1);
 
+  // Wishlist states
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [togglingWishlist, setTogglingWishlist] = useState(false);
+
   useEffect(() => {
     if (!slug) return;
     setLoading(true);
-    setQty(1);
     api
       .productBySlug(slug)
       .then((p) => {
         setProduct(p);
+        setQty(p.stock_quantity > 0 ? 1 : 0);
         // Load related products from same category
         if (p.category?.slug) {
           setRelatedLoading(true);
@@ -73,6 +77,42 @@ export default function ProductPage() {
       })
       .finally(() => setReviewsLoading(false));
   }, [product, reviewsPage]);
+
+  useEffect(() => {
+    if (!token || !product) {
+      setIsWishlisted(false);
+      return;
+    }
+    api.wishlist()
+      .then((items) => {
+        setIsWishlisted(items.some((item) => item.id === product.id));
+      })
+      .catch(() => setIsWishlisted(false));
+  }, [product, token]);
+
+  const toggleWishlist = async () => {
+    if (!token) {
+      navigate("/dang-nhap", { state: { from: `/p/${product?.slug}` } });
+      return;
+    }
+    if (!product || togglingWishlist) return;
+    setTogglingWishlist(true);
+    try {
+      if (isWishlisted) {
+        await api.removeWishlist(product.id);
+        setIsWishlisted(false);
+        toast({ type: "success", message: "Đã xóa khỏi danh sách yêu thích" });
+      } else {
+        await api.addWishlist(product.id);
+        setIsWishlisted(true);
+        toast({ type: "success", message: "Đã thêm vào danh sách yêu thích" });
+      }
+    } catch (e) {
+      toast({ type: "error", message: (e as Error).message });
+    } finally {
+      setTogglingWishlist(false);
+    }
+  };
 
   const addToCart = async () => {
     if (!product) return;
@@ -180,7 +220,19 @@ export default function ProductPage() {
           </motion.div>
 
           <FadeIn delay={0.06} className={styles.info}>
-            {product.brand && <p className={styles.brand}>Thương hiệu: <Link to={`/tim-kiem?q=${encodeURIComponent(product.brand)}`} className={styles.brandLink}>{product.brand}</Link></p>}
+            <div className={styles.brandAndSeller}>
+              {product.brand && (
+                <span className={styles.brand}>
+                  Thương hiệu: <Link to={`/tim-kiem?q=${encodeURIComponent(product.brand)}`} className={styles.brandLink}>{product.brand}</Link>
+                </span>
+              )}
+              {product.brand && product.shop && <span className={styles.metaDot}>·</span>}
+              {product.shop && (
+                <span className={styles.seller}>
+                  Nhà bán hàng: <span className={styles.sellerName}>{product.shop.shopName}</span>
+                </span>
+              )}
+            </div>
             <h1 className={styles.title}>{product.name}</h1>
             <div className={styles.meta}>
               <span className={styles.metaStars} aria-hidden>{"★".repeat(Math.round(product.rating))}</span>
@@ -220,36 +272,97 @@ export default function ProductPage() {
               </div>
             </div>
 
+            {/* Show remaining quantity */}
+            <div className={styles.stockStatus} style={{ marginBottom: 16 }}>
+              {product.stock_quantity > 3 ? (
+                <span className={styles.inStock} style={{ color: "#10b981", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                  🟢 In stock: {product.stock_quantity} items
+                </span>
+              ) : product.stock_quantity > 0 ? (
+                <span className={styles.lowStock} style={{ color: "#f59e0b", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                  🟡 Only {product.stock_quantity} items left
+                </span>
+              ) : (
+                <span className={styles.outOfStock} style={{ color: "#ef4444", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+                  🔴 Out of stock
+                </span>
+              )}
+            </div>
+
             <div className={styles.qty}>
               <span>Số lượng</span>
               <div className={styles.qtyControls}>
-                <button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} disabled={qty <= 1}>
+                <button
+                  type="button"
+                  onClick={() => setQty((q) => Math.max(1, q - 1))}
+                  disabled={qty <= 1 || product.stock_quantity === 0}
+                >
                   −
                 </button>
                 <input
                   type="number"
-                  min={1}
-                  max={99}
+                  min={product.stock_quantity > 0 ? 1 : 0}
+                  max={Math.min(99, product.stock_quantity)}
                   value={qty}
-                  onChange={(e) => setQty(Math.min(99, Math.max(1, Number(e.target.value) || 1)))}
+                  onChange={(e) => {
+                    const maxAllowed = Math.min(99, product.stock_quantity);
+                    const minAllowed = product.stock_quantity > 0 ? 1 : 0;
+                    setQty(Math.min(maxAllowed, Math.max(minAllowed, Number(e.target.value) || minAllowed)));
+                  }}
+                  disabled={product.stock_quantity === 0}
                   aria-label="Số lượng sản phẩm"
                 />
-                <button type="button" onClick={() => setQty((q) => Math.min(99, q + 1))} disabled={qty >= 99}>
+                <button
+                  type="button"
+                  onClick={() => setQty((q) => Math.min(Math.min(99, product.stock_quantity), q + 1))}
+                  disabled={qty >= product.stock_quantity || product.stock_quantity === 0}
+                >
                   +
                 </button>
               </div>
             </div>
 
             <div className={styles.actions}>
-              <button type="button" className="btn btn-primary btn-lg" onClick={addToCart} disabled={addingToCart}>
+              <button
+                type="button"
+                className="btn btn-primary btn-lg"
+                onClick={addToCart}
+                disabled={addingToCart || product.stock_quantity === 0}
+              >
                 {addingToCart ? (
                   <><span className="spinner" style={{ width: 18, height: 18 }} /> Đang thêm…</>
                 ) : (
                   "Thêm vào giỏ hàng"
                 )}
               </button>
-              <button type="button" className={`btn btn-lg ${styles.buyNowBtn}`} onClick={buyNow} disabled={addingToCart}>
+              <button
+                type="button"
+                className={`btn btn-lg ${styles.buyNowBtn}`}
+                onClick={buyNow}
+                disabled={addingToCart || product.stock_quantity === 0}
+              >
                 Mua ngay
+              </button>
+              <button
+                type="button"
+                className={`btn btn-lg ${styles.wishlistBtn} ${isWishlisted ? styles.active : ""}`}
+                onClick={toggleWishlist}
+                disabled={togglingWishlist}
+                title={isWishlisted ? "Xóa khỏi danh sách yêu thích" : "Thêm vào danh sách yêu thích"}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill={isWishlisted ? "#ff424e" : "none"}
+                  stroke={isWishlisted ? "#ff424e" : "currentColor"}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                </svg>
               </button>
             </div>
           </FadeIn>

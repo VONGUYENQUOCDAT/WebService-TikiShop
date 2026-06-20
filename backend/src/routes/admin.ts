@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { normalizeProductSlug } from "../lib/slug.js";
 import { adminRequired, authRequired } from "../middleware/auth.js";
+import { NotificationService } from "../services/notificationService.js";
 
 const userPublicSelect = {
   id: true,
@@ -84,6 +85,7 @@ const productCreateBody = z.object({
   brand: z.string().max(120).nullable().optional(),
   tags: z.string().max(500).nullable().optional(),
   categoryId: z.string().min(1),
+  stock_quantity: z.coerce.number().int().min(0).optional().default(0),
 });
 
 const productsListQuery = paginationQuery.extend({
@@ -111,6 +113,7 @@ const productPatchBody = z
     brand: z.string().max(120).nullable().optional(),
     tags: z.string().max(500).nullable().optional(),
     categoryId: z.string().min(1).optional(),
+    stock_quantity: z.coerce.number().int().min(0).optional(),
   })
   .refine((o) => Object.keys(o).length > 0, { message: "Cần ít nhất một trường cập nhật" });
 
@@ -650,23 +653,42 @@ router.post("/products", async (req, res) => {
     res.status(400).json({ error: "Slug đã tồn tại" });
     return;
   }
-  const created = await prisma.product.create({
-    data: {
-      name: d.name,
-      slug: d.slug,
-      description: d.description,
-      price: d.price,
-      listPrice: d.listPrice ?? null,
-      image: d.image,
-      rating: d.rating,
-      reviewCount: d.reviewCount,
-      sold: d.sold,
-      badge: d.badge ?? null,
-      brand: d.brand ?? null,
-      tags: d.tags ?? null,
-      categoryId: d.categoryId,
-    },
-    include: { category: { select: { id: true, name: true, slug: true } } },
+  const created = await prisma.$transaction(async (tx) => {
+    const pRow = await tx.product.create({
+      data: {
+        name: d.name,
+        slug: d.slug,
+        description: d.description,
+        price: d.price,
+        listPrice: d.listPrice ?? null,
+        image: d.image,
+        rating: d.rating,
+        reviewCount: d.reviewCount,
+        sold: d.sold,
+        badge: d.badge ?? null,
+        brand: d.brand ?? null,
+        tags: d.tags ?? null,
+        categoryId: d.categoryId,
+        stock_quantity: d.stock_quantity,
+      },
+    });
+
+    const branches = await tx.branch.findMany();
+    for (const br of branches) {
+      await tx.branchProduct.create({
+        data: {
+          branchId: br.id,
+          productId: pRow.id,
+          stock: 0,
+          minStock: 10,
+        },
+      });
+    }
+
+    return await tx.product.findUnique({
+      where: { id: pRow.id },
+      include: { category: { select: { id: true, name: true, slug: true } } },
+    });
   });
   res.status(201).json(created);
 });
@@ -960,7 +982,7 @@ router.patch("/deliveries/:id/status", async (req, res) => {
       if (status === "DELIVERED") {
         await tx.order.update({
           where: { id: order.id },
-          data: { status: "completed" },
+          data: { status: "delivered" },
         });
       }
 
@@ -1046,6 +1068,13 @@ router.patch("/shops/:id/approve", async (req, res) => {
       return updatedShop;
     });
 
+    // Trigger notification
+    await NotificationService.createNotification(
+      shop.ownerId,
+      "Đăng ký gian hàng thành công",
+      `Yêu cầu mở gian hàng "${shop.shopName}" đã được duyệt thành công! Bạn có thể truy cập Kênh người bán.`
+    );
+
     res.json(result);
   } catch (err: any) {
     res.status(500).json({ error: err.message || "Failed to approve shop" });
@@ -1069,6 +1098,13 @@ router.patch("/shops/:id/reject", async (req, res) => {
       data: { status: "REJECTED", rejectReason: reason || null },
       include: { owner: { select: { id: true, email: true, name: true, phone: true } } },
     });
+
+    // Trigger notification
+    await NotificationService.createNotification(
+      shop.ownerId,
+      "Đăng ký gian hàng bị từ chối",
+      `Yêu cầu mở gian hàng "${shop.shopName}" đã bị từ chối. Lý do: ${reason || "Không rõ"}`
+    );
 
     res.json(updatedShop);
   } catch (err: any) {

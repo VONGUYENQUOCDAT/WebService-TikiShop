@@ -417,3 +417,47 @@
   font-weight: 600;
 }
 
+.savedAddressSelector {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.savedAddressSelector select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  margin-top: 6px;
+  outline: none;
+  background: #fff;
+}
+
+.savedAddressSelector select:focus {
+  border-color: var(--tiki-blue, #0a68ff);
+}
+
+.selectedAddressCard {
+  border: 1px dashed var(--tiki-blue, #0a68ff);
+  background: var(--tiki-blue-soft, #f0f6ff);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 0.88rem;
+  color: var(--text-secondary, #4b5563);
+  line-height: 1.45;
+  margin-bottom: 12px;
+}
+
+.selectedAddressHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  color: var(--text, #1f2937);
+  margin-bottom: 6px;
+}
+
+

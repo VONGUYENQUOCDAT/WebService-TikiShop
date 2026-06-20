@@ -13,15 +13,19 @@ import {
 import { isAdmin, roleLabel } from "@/shared/lib/roles";
 import { validateAccountFields } from "@/shared/lib/validators";
 import { useAuthStore } from "@/store/authStore";
+import { useCartStore } from "@/store/cartStore";
 import { useToast, ConfirmModal } from "@/shared/ui";
 import styles from "./AccountPage.module.css";
 
 /* ===== Tab types ===== */
-type Tab = "profile" | "orders" | "order-detail" | "settings";
+type Tab = "profile" | "addresses" | "notifications" | "wishlist" | "orders" | "order-detail" | "settings";
 
 /* ===== Sidebar navigation items ===== */
 const NAV_ITEMS: { tab: Tab; icon: string; label: string }[] = [
   { tab: "profile", icon: "👤", label: "Thông tin cá nhân" },
+  { tab: "addresses", icon: "📍", label: "Sổ địa chỉ" },
+  { tab: "notifications", icon: "🔔", label: "Thông báo" },
+  { tab: "wishlist", icon: "❤️", label: "Yêu thích" },
   { tab: "orders", icon: "📦", label: "Đơn hàng của tôi" },
   { tab: "settings", icon: "⚙️", label: "Cài đặt" },
 ];
@@ -40,6 +44,9 @@ export default function AccountPage() {
     if (orderIdParam && path.includes("/don-hang/")) return "order-detail";
     if (path.includes("/don-hang")) return "orders";
     if (path.includes("/cai-dat")) return "settings";
+    if (path.includes("/dia-chi")) return "addresses";
+    if (path.includes("/thong-bao")) return "notifications";
+    if (path.includes("/yeu-thich")) return "wishlist";
     return "profile";
   };
 
@@ -57,6 +64,15 @@ export default function AccountPage() {
         break;
       case "settings":
         navigate("/tai-khoan/cai-dat");
+        break;
+      case "addresses":
+        navigate("/tai-khoan/dia-chi");
+        break;
+      case "notifications":
+        navigate("/tai-khoan/thong-bao");
+        break;
+      case "wishlist":
+        navigate("/tai-khoan/yeu-thich");
         break;
       default:
         navigate("/tai-khoan");
@@ -151,6 +167,9 @@ export default function AccountPage() {
         {/* --- Content area --- */}
         <main className={styles.content}>
           {activeTab === "profile" && <ProfileTab />}
+          {activeTab === "addresses" && <AddressesTab />}
+          {activeTab === "notifications" && <NotificationsTab />}
+          {activeTab === "wishlist" && <WishlistTab />}
           {activeTab === "orders" && <OrdersTab onViewDetail={(id) => navigate(`/tai-khoan/don-hang/${id}`)} />}
           {activeTab === "order-detail" && orderIdParam && (
             <OrderDetailTab orderId={orderIdParam} onBack={() => navigate("/tai-khoan/don-hang")} />
@@ -470,9 +489,58 @@ function OrderDetailTab({ orderId, onBack }: { orderId: string; onBack: () => vo
       )}
 
       <div className={styles.detailTotal}>{formatPrice(order.total)}</div>
-      <p className={styles.detailInfo}><strong>Thanh toán:</strong> COD — thanh toán khi nhận hàng</p>
+      <p className={styles.detailInfo}>
+        <strong>Thanh toán:</strong>{" "}
+        {order.paymentMethod === "ONLINE" ? "Thanh toán trực tuyến (ONLINE)" : "Thanh toán tiền mặt khi nhận hàng (COD)"}{" "}
+        <span style={{
+          fontWeight: 700,
+          color: order.paymentStatus === "PAID" ? "#16a34a" : "#d97706",
+          fontSize: 12,
+          marginLeft: 6
+        }}>
+          ({order.paymentStatus === "PAID" ? "Đã thanh toán" : "Chờ thanh toán"})
+        </span>
+      </p>
       <p className={styles.detailInfo}><strong>Điện thoại:</strong> {order.phone}</p>
       <p className={styles.detailInfo}><strong>Địa chỉ:</strong> {order.address}</p>
+
+      {order.paymentMethod === "ONLINE" && order.paymentStatus === "PENDING" && order.status !== "cancelled" && (
+        <div style={{
+          background: "#fffbeb",
+          border: "1px solid #fef3c7",
+          padding: 16,
+          borderRadius: 8,
+          marginTop: 12,
+          marginBottom: 16,
+          display: "flex",
+          flexDirection: "column",
+          gap: 10
+        }}>
+          <div style={{ color: "#b45309", fontWeight: 700, fontSize: 14 }}>
+            💳 Đơn hàng đang chờ thanh toán trực tuyến
+          </div>
+          <p style={{ fontSize: 13, color: "#6b7280", margin: 0 }}>
+            Bạn đã chọn phương thức thanh toán ONLINE. Vui lòng bấm vào nút dưới đây để giả lập thanh toán đơn hàng.
+          </p>
+          <button
+            type="button"
+            className="btn btn-primary btn-sm"
+            style={{ alignSelf: "flex-start" }}
+            onClick={async () => {
+              try {
+                const updatedOrder = await api.payOrder(order.id);
+                setOrder(updatedOrder);
+                toast({ type: "success", message: "Thanh toán trực tuyến giả lập thành công!" });
+                setRefreshTrigger((prev) => prev + 1);
+              } catch (e: any) {
+                toast({ type: "error", message: e.message });
+              }
+            }}
+          >
+            💳 Giả lập thanh toán ngay
+          </button>
+        </div>
+      )}
 
       {orderCanCustomerCancel(order.status) && (
         <div className={styles.cancelRow}>
@@ -947,6 +1015,544 @@ function SettingsTab() {
           🚪 Đăng xuất
         </button>
       </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   ADDRESSES TAB
+   ========================================================= */
+type Address = import("@/shared/api/types").Address;
+
+function AddressesTab() {
+  const token = useAuthStore((s) => s.token);
+  const toast = useToast();
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+
+  // Address form states
+  const [provinces, setProvinces] = useState<any[]>([]);
+  const [districts, setDistricts] = useState<any[]>([]);
+  const [wards, setWards] = useState<any[]>([]);
+
+  const [selectedProvinceCode, setSelectedProvinceCode] = useState("");
+  const [selectedDistrictCode, setSelectedDistrictCode] = useState("");
+  const [selectedWardCode, setSelectedWardCode] = useState("");
+
+  const [selectedProvinceName, setSelectedProvinceName] = useState("");
+  const [selectedDistrictName, setSelectedDistrictName] = useState("");
+  const [selectedWardName, setSelectedWardName] = useState("");
+
+  const [streetAddress, setStreetAddress] = useState("");
+  const [addressType, setAddressType] = useState<"HOME" | "OFFICE">("HOME");
+  const [isDefault, setIsDefault] = useState(false);
+
+  const [fieldErrors, setFieldErrors] = useState<any>({});
+  const [saving, setSaving] = useState(false);
+
+  const fetchAddresses = () => {
+    setLoading(true);
+    api.addresses()
+      .then(setAddresses)
+      .catch((e: Error) => toast({ type: "error", message: e.message }))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    if (token) fetchAddresses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
+  // Load provinces on form open
+  useEffect(() => {
+    if (showForm) {
+      fetch("https://provinces.open-api.vn/api/p/")
+        .then((res) => res.json())
+        .then(setProvinces)
+        .catch((err) => console.error("Lỗi tải danh mục tỉnh thành:", err));
+    }
+  }, [showForm]);
+
+  const handleProvinceChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const code = e.target.value;
+    setSelectedProvinceCode(code);
+    setSelectedDistrictCode("");
+    setSelectedWardCode("");
+    setDistricts([]);
+    setWards([]);
+    if (!code) {
+      setSelectedProvinceName("");
+      setSelectedDistrictName("");
+      setSelectedWardName("");
+      return;
+    }
+    const prov = provinces.find((p) => String(p.code) === code);
+    setSelectedProvinceName(prov ? prov.name : "");
+    try {
+      const res = await fetch(`https://provinces.open-api.vn/api/p/${code}?depth=2`);
+      const data = await res.json();
+      setDistricts(data.districts || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDistrictChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const code = e.target.value;
+    setSelectedDistrictCode(code);
+    setSelectedWardCode("");
+    setWards([]);
+    if (!code) {
+      setSelectedDistrictName("");
+      setSelectedWardName("");
+      return;
+    }
+    const dist = districts.find((d) => String(d.code) === code);
+    setSelectedDistrictName(dist ? dist.name : "");
+    try {
+      const res = await fetch(`https://provinces.open-api.vn/api/d/${code}?depth=2`);
+      const data = await res.json();
+      setWards(data.wards || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleWardChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const code = e.target.value;
+    setSelectedWardCode(code);
+    if (!code) {
+      setSelectedWardName("");
+      return;
+    }
+    const wd = wards.find((w) => String(w.code) === code);
+    setSelectedWardName(wd ? wd.name : "");
+  };
+
+  const openAddForm = () => {
+    setEditingAddress(null);
+    setSelectedProvinceCode("");
+    setSelectedDistrictCode("");
+    setSelectedWardCode("");
+    setSelectedProvinceName("");
+    setSelectedDistrictName("");
+    setSelectedWardName("");
+    setStreetAddress("");
+    setAddressType("HOME");
+    setIsDefault(false);
+    setFieldErrors({});
+    setShowForm(true);
+  };
+
+  const openEditForm = async (addr: Address) => {
+    setEditingAddress(addr);
+    setSelectedProvinceCode(addr.provinceId);
+    setSelectedProvinceName(addr.provinceName);
+    setStreetAddress(addr.streetAddress);
+    setAddressType(addr.addressType);
+    setIsDefault(addr.isDefault);
+    setFieldErrors({});
+    setShowForm(true);
+
+    try {
+      const resDist = await fetch(`https://provinces.open-api.vn/api/p/${addr.provinceId}?depth=2`);
+      const dataDist = await resDist.json();
+      setDistricts(dataDist.districts || []);
+      setSelectedDistrictCode(addr.districtId);
+      setSelectedDistrictName(addr.districtName);
+
+      const resWard = await fetch(`https://provinces.open-api.vn/api/d/${addr.districtId}?depth=2`);
+      const dataWard = await resWard.json();
+      setWards(dataWard.wards || []);
+      setSelectedWardCode(addr.wardId);
+      setSelectedWardName(addr.wardName);
+    } catch (err) {
+      console.error("Lỗi khi load chi tiết địa chỉ sửa:", err);
+    }
+  };
+
+  const deleteAddress = async (id: string) => {
+    if (!window.confirm("Bạn có chắc muốn xóa địa chỉ này?")) return;
+    try {
+      await api.deleteAddress(id);
+      toast({ type: "success", message: "Đã xóa địa chỉ thành công." });
+      fetchAddresses();
+    } catch (e: any) {
+      toast({ type: "error", message: e.message });
+    }
+  };
+
+  const setAsDefault = async (id: string) => {
+    try {
+      await api.setDefaultAddress(id);
+      toast({ type: "success", message: "Đã thiết lập địa chỉ mặc định." });
+      fetchAddresses();
+    } catch (e: any) {
+      toast({ type: "error", message: e.message });
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const fe: any = {};
+    if (!selectedProvinceCode) fe.province = "Vui lòng chọn Tỉnh/Thành";
+    if (!selectedDistrictCode) fe.district = "Vui lòng chọn Quận/Huyện";
+    if (!selectedWardCode) fe.ward = "Vui lòng chọn Phường/Xã";
+    if (!streetAddress.trim() || streetAddress.trim().length < 5) {
+      fe.streetAddress = "Vui lòng nhập địa chỉ cụ thể (tối thiểu 5 ký tự)";
+    }
+    setFieldErrors(fe);
+    if (Object.keys(fe).length > 0) return;
+
+    setSaving(true);
+    const body = {
+      provinceId: selectedProvinceCode,
+      provinceName: selectedProvinceName,
+      districtId: selectedDistrictCode,
+      districtName: selectedDistrictName,
+      wardId: selectedWardCode,
+      wardName: selectedWardName,
+      streetAddress: streetAddress.trim(),
+      addressType,
+      isDefault,
+    };
+
+    try {
+      if (editingAddress) {
+        await api.updateAddress(editingAddress.id, body);
+        toast({ type: "success", message: "Cập nhật địa chỉ thành công!" });
+      } else {
+        await api.createAddress(body);
+        toast({ type: "success", message: "Thêm địa chỉ thành công!" });
+      }
+      setShowForm(false);
+      fetchAddresses();
+    } catch (err: any) {
+      toast({ type: "error", message: err.message || "Lỗi lưu địa chỉ." });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className={styles.contentPanel}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <h2 className={styles.contentTitle} style={{ margin: 0, border: "none", padding: 0 }}>Sổ địa chỉ</h2>
+        {!showForm && (
+          <button type="button" className="btn btn-primary btn-sm" onClick={openAddForm}>
+            ➕ Thêm địa chỉ mới
+          </button>
+        )}
+      </div>
+
+      {showForm && (
+        <form className={styles.addressForm} onSubmit={handleSubmit}>
+          <h3>{editingAddress ? "Chỉnh sửa địa chỉ" : "Thêm địa chỉ mới"}</h3>
+          <div className={styles.addressGrid}>
+            <label>
+              Tỉnh / Thành phố *
+              <select className="input" value={selectedProvinceCode} onChange={handleProvinceChange}>
+                <option value="">-- Chọn Tỉnh/Thành --</option>
+                {provinces.map((p) => (
+                  <option key={p.code} value={p.code}>{p.name}</option>
+                ))}
+              </select>
+              {fieldErrors.province && <span className="field-error">{fieldErrors.province}</span>}
+            </label>
+
+            <label>
+              Quận / Huyện *
+              <select className="input" value={selectedDistrictCode} onChange={handleDistrictChange} disabled={!selectedProvinceCode}>
+                <option value="">-- Chọn Quận/Huyện --</option>
+                {districts.map((d) => (
+                  <option key={d.code} value={d.code}>{d.name}</option>
+                ))}
+              </select>
+              {fieldErrors.district && <span className="field-error">{fieldErrors.district}</span>}
+            </label>
+
+            <label>
+              Phường / Xã *
+              <select className="input" value={selectedWardCode} onChange={handleWardChange} disabled={!selectedDistrictCode}>
+                <option value="">-- Chọn Phường/Xã --</option>
+                {wards.map((w) => (
+                  <option key={w.code} value={w.code}>{w.name}</option>
+                ))}
+              </select>
+              {fieldErrors.ward && <span className="field-error">{fieldErrors.ward}</span>}
+            </label>
+          </div>
+
+          <label>
+            Số nhà, tên đường *
+            <textarea
+              className="input"
+              rows={2}
+              value={streetAddress}
+              onChange={(e) => setStreetAddress(e.target.value)}
+              placeholder="VD: số 12 đường Hoàng Diệu..."
+            />
+            {fieldErrors.streetAddress && <span className="field-error">{fieldErrors.streetAddress}</span>}
+          </label>
+
+          <label>
+            Loại địa chỉ
+            <div className={styles.typeSelector} style={{ display: "flex", gap: 16, marginTop: 4 }}>
+              <label style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                <input type="radio" name="formAddressType" checked={addressType === "HOME"} onChange={() => setAddressType("HOME")} />
+                Nhà riêng
+              </label>
+              <label style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                <input type="radio" name="formAddressType" checked={addressType === "OFFICE"} onChange={() => setAddressType("OFFICE")} />
+                Văn phòng / Cơ quan
+              </label>
+            </div>
+          </label>
+
+          <label style={{ display: "flex", gap: 8, alignItems: "center", cursor: "pointer" }}>
+            <input type="checkbox" checked={isDefault} onChange={(e) => setIsDefault(e.target.checked)} disabled={editingAddress?.isDefault} />
+            Đặt làm địa chỉ mặc định
+          </label>
+
+          <div className={styles.addressActionRow} style={{ marginTop: 12 }}>
+            <button type="submit" className="btn btn-primary btn-sm" disabled={saving}>
+              {saving ? "Đang lưu..." : "Lưu địa chỉ"}
+            </button>
+            <button type="button" className="btn btn-outline btn-sm" onClick={() => setShowForm(false)} disabled={saving}>
+              Hủy
+            </button>
+          </div>
+        </form>
+      )}
+
+      {loading ? (
+        <div style={{ padding: 24, textAlign: "center" }}><div className="spinner" /></div>
+      ) : addresses.length === 0 ? (
+        <div className="empty-state" style={{ padding: 24 }}>
+          <p>Bạn chưa lưu địa chỉ giao hàng nào.</p>
+        </div>
+      ) : (
+        <div className={styles.addressList}>
+          {addresses.map((addr) => (
+            <div key={addr.id} className={`${styles.addressCard} ${addr.isDefault ? styles.addressCardDefault : ""}`}>
+              <div className={styles.addressInfo}>
+                <div className={styles.addressBadgeRow}>
+                  <span className={styles.addressTypeBadge}>{addr.addressType === "HOME" ? "Nhà riêng" : "Văn phòng"}</span>
+                  {addr.isDefault && <span className={styles.defaultBadge}>Mặc định</span>}
+                </div>
+                <div className={styles.addressStreet}>{addr.streetAddress}</div>
+                <div className={styles.addressDetailText}>
+                  {addr.wardName}, {addr.districtName}, {addr.provinceName}
+                </div>
+              </div>
+              <div className={styles.addressActions}>
+                <div className={styles.addressActionRow}>
+                  <button type="button" className="btn btn-outline btn-xs" onClick={() => openEditForm(addr)}>Sửa</button>
+                  <button type="button" className="btn btn-outline btn-xs btn-danger" onClick={() => deleteAddress(addr.id)} disabled={addr.isDefault}>Xóa</button>
+                </div>
+                {!addr.isDefault && (
+                  <button type="button" className="btn btn-link btn-xs" onClick={() => setAsDefault(addr.id)}>
+                    Đặt làm mặc định
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* =========================================================
+   NOTIFICATIONS TAB
+   ========================================================= */
+type Notification = import("@/shared/api/types").Notification;
+
+function NotificationsTab() {
+  const token = useAuthStore((s) => s.token);
+  const toast = useToast();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchNotifications = () => {
+    setLoading(true);
+    api.notifications()
+      .then(setNotifications)
+      .catch((e: Error) => console.error(e))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    if (token) fetchNotifications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
+  const markRead = async (id: string) => {
+    try {
+      await api.markNotificationRead(id);
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+      );
+    } catch (e: any) {
+      toast({ type: "error", message: e.message });
+    }
+  };
+
+  const markAllRead = async () => {
+    try {
+      await api.markAllNotificationsRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      toast({ type: "success", message: "Đã đánh dấu tất cả là đã đọc." });
+    } catch (e: any) {
+      toast({ type: "error", message: e.message });
+    }
+  };
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  return (
+    <div className={styles.contentPanel}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <h2 className={styles.contentTitle} style={{ margin: 0, border: "none", padding: 0 }}>
+          Thông báo {unreadCount > 0 && `(${unreadCount})`}
+        </h2>
+        {unreadCount > 0 && (
+          <button type="button" className="btn btn-outline btn-sm" onClick={markAllRead}>
+            ✓ Đọc tất cả
+          </button>
+        )}
+      </div>
+
+      {loading ? (
+        <div style={{ padding: 24, textAlign: "center" }}><div className="spinner" /></div>
+      ) : notifications.length === 0 ? (
+        <div className="empty-state" style={{ padding: 24 }}>
+          <p>Bạn không có thông báo nào.</p>
+        </div>
+      ) : (
+        <div className={styles.notifFeed}>
+          {notifications.map((n) => (
+            <div key={n.id} className={`${styles.notifCard} ${!n.isRead ? styles.notifUnread : ""}`}>
+              <span className={styles.notifIcon} aria-hidden>📢</span>
+              <div className={styles.notifBody}>
+                <div className={styles.notifTitle}>{n.title}</div>
+                <div className={styles.notifContentText}>{n.content}</div>
+                <div className={styles.notifTime}>
+                  {new Date(n.createdAt).toLocaleString("vi-VN")}
+                </div>
+              </div>
+              {!n.isRead && (
+                <button type="button" className={styles.notifMarkReadBtn} onClick={() => markRead(n.id)}>
+                  Đánh dấu đã đọc
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* =========================================================
+   WISHLIST TAB
+   ========================================================= */
+type Product = import("@/shared/api/types").Product;
+
+function WishlistTab() {
+  const token = useAuthStore((s) => s.token);
+  const toast = useToast();
+  const [wishlistItems, setWishlistItems] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchWishlist = () => {
+    setLoading(true);
+    api.wishlist()
+      .then(setWishlistItems)
+      .catch((e: Error) => console.error(e))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    if (token) fetchWishlist();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
+  const removeWishlist = async (productId: string) => {
+    try {
+      await api.removeWishlist(productId);
+      setWishlistItems((prev) => prev.filter((p) => p.id !== productId));
+      toast({ type: "success", message: "Đã xóa sản phẩm khỏi danh sách yêu thích." });
+    } catch (e: any) {
+      toast({ type: "error", message: e.message });
+    }
+  };
+
+  const addToCart = async (productId: string) => {
+    try {
+      await api.addCart(productId, 1);
+      toast({ type: "success", message: "Đã thêm sản phẩm vào giỏ hàng!" });
+      // Update cart count
+      const c = await api.cart();
+      useCartStore.getState().setCount(c.items.reduce((s, i) => s + i.quantity, 0));
+    } catch (e: any) {
+      toast({ type: "error", message: e.message });
+    }
+  };
+
+  return (
+    <div className={styles.contentPanel}>
+      <h2 className={styles.contentTitle}>Sản phẩm yêu thích</h2>
+
+      {loading ? (
+        <div style={{ padding: 24, textAlign: "center" }}><div className="spinner" /></div>
+      ) : wishlistItems.length === 0 ? (
+        <div className="empty-state" style={{ padding: 24 }}>
+          <p>Danh sách yêu thích trống.</p>
+          <Link to="/" className="btn btn-primary btn-sm" style={{ marginTop: 12 }}>
+            Khám phá sản phẩm
+          </Link>
+        </div>
+      ) : (
+        <div className={styles.wishlistGrid}>
+          {wishlistItems.map((p) => (
+            <div key={p.id} className={styles.wishlistCard}>
+              <Link to={`/p/${p.slug}`} className={styles.wishlistImgLink}>
+                <img src={p.image} alt={p.name} className={styles.wishlistImg} />
+              </Link>
+              <div className={styles.wishlistContent}>
+                <Link to={`/p/${p.slug}`} className={styles.wishlistName}>
+                  {p.name}
+                </Link>
+                <div className={styles.wishlistPriceRow}>
+                  <span className={styles.wishlistPrice}>{formatPrice(p.price)}</span>
+                </div>
+              </div>
+              <div className={styles.wishlistActions}>
+                <button
+                  type="button"
+                  className="btn btn-primary btn-xs"
+                  style={{ flex: 1, padding: "4px 8px", fontSize: 11 }}
+                  onClick={() => addToCart(p.id)}
+                >
+                  🛒 Thêm giỏ
+                </button>
+                <button
+                  type="button"
+                  className={styles.wishlistRemoveBtn}
+                  onClick={() => removeWishlist(p.id)}
+                  title="Xóa yêu thích"
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

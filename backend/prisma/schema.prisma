@@ -30,6 +30,8 @@ model User {
   returnRequests ReturnRequest[]
   voucherHistories UserVoucherHistory[]
   shop      Shop?
+  notifications Notification[]
+  wishlist      WishlistItem[]
 
   @@map("user")
 }
@@ -83,6 +85,7 @@ model Product {
   rating             Float               @default(4.5)
   reviewCount        Int                 @default(0)
   sold               Int                 @default(0)
+  stock_quantity     Int                 @default(0)
   badge              String?
   brand              String?
   tags               String?
@@ -100,6 +103,7 @@ model Product {
   stockTransferItems StockTransferItem[]
   reviews            Review[]
   returnItems        ReturnItem[]
+  wishlist           WishlistItem[]
 
   @@index([name], map: "Product_name_idx")
   @@index([description], map: "Product_description_idx")
@@ -145,6 +149,10 @@ model Order {
   shippingFee   Int         @default(0)
   discount      Int         @default(0)
   voucherCode   String?
+  paymentMethod     String      @default("COD")
+  paymentStatus     String      @default("PENDING")
+  paymentReference  String?
+  payosOrderCode    Int?        @unique
   createdAt     DateTime    @default(now())
   user          User        @relation(fields: [userId], references: [id])
   branch        Branch?     @relation(fields: [branchId], references: [id])
@@ -400,6 +408,7 @@ model ReturnRequest {
   reason        String
   refund_amount Int
   status        String       @default("PENDING")
+  evidenceUrls  String       @default("[]")
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
@@ -469,4 +478,30 @@ model DeliveryOrder {
   order                   Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@map("delivery_order")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  content   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification")
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("wishlist_item")
 }

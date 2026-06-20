@@ -190,7 +190,8 @@ export default function AdminInventory() {
                   <th>Chi nhánh</th>
                   <th>Sản phẩm</th>
                   <th>SKU</th>
-                  <th>Số lượng tồn</th>
+                  <th>Số lượng tồn (Chi nhánh)</th>
+                  <th>Tổng tồn kho (Sản phẩm)</th>
                   <th>Cảnh báo</th>
                 </tr>
               </thead>
@@ -204,6 +205,9 @@ export default function AdminInventory() {
                       <td className={styles.mono}>{st.product?.sku}</td>
                       <td style={{ fontWeight: 700, fontSize: "1rem", color: isLow ? "#b91c1c" : "#0f172a" }}>
                         {st.stock}
+                      </td>
+                      <td style={{ fontWeight: 600 }}>
+                        {st.product?.stock_quantity}
                       </td>
                       <td>
                         {isLow ? (

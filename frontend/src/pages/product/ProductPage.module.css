@@ -576,3 +576,50 @@
   color: var(--text-secondary);
   font-weight: 500;
 }
+
+/* Brand and Seller details */
+.brandAndSeller {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.brandAndSeller .brand {
+  margin: 0;
+}
+.brandAndSeller .seller {
+  margin: 0;
+}
+.brandAndSeller .sellerName {
+  color: var(--tiki-blue);
+  font-weight: 600;
+}
+
+/* Wishlist Button */
+.wishlistBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px !important;
+  max-width: 48px !important;
+  height: 48px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: #fff;
+  cursor: pointer;
+  transition: all var(--duration-fast);
+  padding: 0 !important;
+  flex: 0 0 48px !important;
+}
+.wishlistBtn:hover {
+  background: #fff0f1;
+  border-color: #ff424e;
+  color: #ff424e;
+}
+.wishlistBtn.active {
+  background: #fff0f1;
+  border-color: #ff424e;
+}
